@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Profilo 1": {
+      "commandName": "Executable",
+      "executablePath": "E:\\Documenti\\C# Programs\\ANSI GUI Test\\bin\\Debug\\net6.0\\ANSI GUI Test.exe"
+    },
+    "Profilo 2": {
+      "commandName": "Project"
+    }
+  }
+}

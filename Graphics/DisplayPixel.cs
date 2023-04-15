@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace Lodeon.Terminal
 {
     /// <summary>
-    /// <see cref="Pixel"/> struct that can be directly displayed to <see cref="Terminal"/> (Implements <see cref="IRenderable"/>)<br/>
+    /// <see cref="Pixel"/> struct that can be directly displayed to <see cref="AnsiDriver"/> (Implements <see cref="IRenderable"/>)<br/>
     /// Use not recommended
     /// </summary>
     public struct DisplayPixel : IRenderable

@@ -13,7 +13,7 @@
                 return;
 
             // Set background as page's background
-            Terminal.Clear(page.Background);
+            AnsiDriver.Clear(page.Background);
 
             OnPageChanged?.Invoke(page);
             CurrentPage = page;

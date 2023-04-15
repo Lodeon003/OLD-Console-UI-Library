@@ -108,7 +108,7 @@ public abstract class UIElement
         if (!IsEnabled || !IsVisible)
             return;
 
-        Terminal.Display(buffer);
+        AnsiDriver.Display(buffer);
     }
 
     /// <summary>
@@ -121,7 +121,7 @@ public abstract class UIElement
         //if (!IsEnabled || !IsVisible)   // I think this function should work anyway as it doesn't show the object itself
         //    return;
 
-        Terminal.Display(buffer.GetGraphics(false), buffer.GetSourceArea(), buffer.Position);
+        AnsiDriver.Display(buffer.GetGraphics(false), buffer.GetSourceArea(), buffer.Position);
     }
 
     protected Point LocalToScreen(Point localPoint)
@@ -133,7 +133,7 @@ public abstract class UIElement
             return;
 
         Point screenPos = LocalToScreen(offset);
-        Terminal.Display(buffer, new Rectangle(screenPos.X, screenPos.Y, size.X, size.Y), size);
+        AnsiDriver.Display(buffer, new Rectangle(screenPos.X, screenPos.Y, size.X, size.Y), size);
     }
 
     private protected void Display(UIBuffer buffer, Rectangle screenArea)
@@ -141,7 +141,7 @@ public abstract class UIElement
         if (!IsEnabled || !IsVisible)
             return;
 
-        Terminal.Display(buffer, screenArea);
+        AnsiDriver.Display(buffer, screenArea);
     }
 
     public void SetVisible(bool visible)

@@ -7,7 +7,7 @@ namespace Lodeon.Terminal.UI;
 /// </summary>
 public abstract class Program
 {
-    private Driver _output;
+    private Driver? _output;
 
     public static async Task Run<T>(Driver customDriver) where T : Program, new()
     {

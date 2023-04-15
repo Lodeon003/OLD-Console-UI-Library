@@ -168,11 +168,7 @@ public class AnsiDriver : Driver
     {
         Pixel pixel = new Pixel().WithBackground(background);
 
-        // Convert pixel to displayble placed at screen 0.0 coordinates
-        // This changes the color of the next pixels. Clearing the console will color all console with this background
-        DisplayPixel display = new DisplayPixel(pixel, Point.Empty);
-
-        Display(display);
+        SetBackground(background);
 
         int length = Console.BufferWidth * Console.BufferHeight;
 
@@ -182,10 +178,23 @@ public class AnsiDriver : Driver
         for (int i = 0; i < length; i++)
             sp[i] = ' ';
 
-        lock (_lock)
-        {
-            Console.Out.Write(sp);
-        }
+        Display(sp, Point.Empty);
+    }
+
+    public override void SetBackground(Color background)
+    {
+        Pixel pixel = new Pixel().WithBackground(background);
+
+        Span<Pixel> span = MemoryMarshal.CreateSpan(ref pixel, 1);
+        Display(span, new Rectangle(0, 0, 1, 1), Point.Empty);
+    }
+
+    public override void SetForeground(Color foreground)
+    {
+        Pixel pixel = new Pixel().WithForeground(foreground);
+
+        Span<Pixel> span = MemoryMarshal.CreateSpan(ref pixel, 1);
+        Display(span, new Rectangle(0, 0, 1, 1), Point.Empty);
     }
 
     private void ModifyForegroundSequence(Color color)

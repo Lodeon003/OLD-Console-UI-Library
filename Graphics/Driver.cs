@@ -90,6 +90,24 @@ public abstract class Driver : IDisposable
     }
 
     /// <summary>
+    /// add description
+    /// </summary>
+    /// <param name="graphic">An object that implements <see cref="IRenderable"/> interface</param>
+    /// <param name="sourceArea">The area of the buffer array to draw.
+    /// you can exclude a part of the buffer if you don't need to display the whole graphic</param>
+    /// <param name="destinationPosition">The element's top-left coordinate on the screen</param>
+    public void Display(ReadOnlySpan<Pixel> buffer, Rectangle sourceArea, Point destinationPosition)
+    {
+        if (Disposed)
+            throw new ObjectDisposedException(this.GetType().FullName);
+
+        lock (_lock)
+        {
+            OnDisplay(buffer, sourceArea, destinationPosition);
+        }
+    }
+
+    /// <summary>
     /// Displays a row of characters starting from a certain point on the screen
     /// </summary>
     /// <param name="characters"></param>
@@ -126,4 +144,7 @@ public abstract class Driver : IDisposable
     {
         throw new NotImplementedException();
     }
+
+    public abstract void SetBackground(Color background);
+    public abstract void SetForeground(Color foreground);
 }

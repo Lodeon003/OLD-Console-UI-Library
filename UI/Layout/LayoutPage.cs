@@ -8,8 +8,6 @@ public abstract class LayoutPage : Page, ITransform
     private const string UIResourceAttributeName = "Layout";
     private LayoutElement? _root;
 
-    internal LayoutPage(Driver output, bool isMain) : base(output, isMain) {}
-
     public event TransformChangedEvent? PositionChanged;
     public event TransformChangedEvent? SizeChanged;
 

@@ -20,4 +20,6 @@ public readonly struct Unit
 
     public static bool operator !=(Unit left, Unit right)
         => !(left == right);
+
+    // Caccamolle
 }

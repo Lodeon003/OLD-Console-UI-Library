@@ -35,6 +35,5 @@ public struct LayoutResult
         ContentArea = contentArea;
         Children = children;
         PositionKind = positionKind;
-        ParentLayout = parentLayout;
     }
 }

@@ -5,7 +5,7 @@ VisualStudioVersion = 17.2.32602.215
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ANSI GUI Library", "ANSI GUI Library.csproj", "{9F16EF67-50FF-443B-A4F6-B1DE6AB0D366}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test Application", "..\Test Application\Test Application.csproj", "{A2D81FFA-9182-476B-8673-306975E5B720}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test Application", "..\Test Application\Test Application.csproj", "{A2D81FFA-9182-476B-8673-306975E5B720}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

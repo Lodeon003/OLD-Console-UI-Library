@@ -36,6 +36,16 @@ public class WindowsDriver : Driver
         throw new NotImplementedException();
     }
 
+    public override void SetBackground(Color background)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void SetForeground(Color foreground)
+    {
+        throw new NotImplementedException();
+    }
+
     protected override void OnDisplay(ReadOnlySpan<Pixel> buffer, Rectangle sourceArea, Point destinationPosition)
     {
         throw new NotImplementedException();

@@ -1,4 +1,6 @@
-﻿namespace Lodeon.Terminal.UI
+﻿using Lodeon.Terminal.Graphics.Drivers;
+
+namespace Lodeon.Terminal.UI
 {
     public static class Output
     {
@@ -13,7 +15,7 @@
                 return;
 
             // Set background as page's background
-            Terminal.Clear(page.Background);
+            AnsiDriver.Clear(page.Background);
 
             OnPageChanged?.Invoke(page);
             CurrentPage = page;

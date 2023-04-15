@@ -116,7 +116,7 @@ internal class UIBuffer : GraphicBuffer
     /// <summary>
     /// If a buffer changes position, the last position must be cleared by drawing everything underneath but not the object itself.<br/>
     /// This prevents <see cref="GetGraphics"/> from drawing the object itself<br/>
-    /// [!] Should be reworked to calculate the whole buffer instead of calling <see cref="Terminal.Display(IRenderable, byte)"/> two times
+    /// [!] Should be reworked to calculate the whole buffer instead of calling <see cref="AnsiDriver.Display(IRenderable, byte)"/> two times
     /// </summary>
     //internal void DrawForeground()
     //{

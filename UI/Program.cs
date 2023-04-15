@@ -7,33 +7,42 @@ namespace Lodeon.Terminal.UI;
 /// </summary>
 public abstract class Program
 {
+    private Driver _output;
+
+    public static async Task Run<T>(Driver customDriver) where T : Program, new()
+    {
+        T program = new T();
+        program.Initialize(customDriver);
+        await program.Execute();
+    }
+
     public static async Task Run<T>() where T : Program, new()
     {
         T program = new T();
+        program.Initialize(Driver.GetDefaultDriver());
         await program.Execute();
     }
 
     private SemaphoreSlim? _exitHandle;
     private Dictionary<string, Page>? _pages;
 
+    private void Initialize(Driver driver)
+    => _output = driver;
+
     internal async Task Execute()
     {
+        if (_output is null)
+            throw new Exception("Internal error. Program was run without it being initialized");
+
         _exitHandle = new SemaphoreSlim(1, 1);
         _pages = new Dictionary<string, Page>();
 
-        OnInitialize(new PageInitializer(_pages));
+        OnInitialize(new PageInitializer(_pages, _output));
 
-        bool mainPageFound = false;
+        Page mainPage;
         foreach (Page page in _pages.Values)
-        {
             if (page.IsMain)
-            {
-                if (!mainPageFound)
-                    mainPageFound = true;
-                else
-                    throw new Exception("More than one page was selected as the main page");
-            }
-        }
+                mainPage = page;
 
 
         Main();

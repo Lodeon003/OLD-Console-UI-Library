@@ -32,6 +32,11 @@ public abstract class LayoutElement : ITransform
     public delegate void LayoutPointArgs(LayoutElement element, Point point);
     public delegate void LayoutPoint4Args(LayoutElement element, Point4 point);
 
+    internal static LayoutElement? TreeFromXml(string path)
+    {
+        throw new NotImplementedException();
+    }
+
     // ITransform Events
     public event TransformChangedEvent? PositionChanged;
     public event TransformChangedEvent? SizeChanged;

@@ -121,4 +121,9 @@ public abstract class Driver : IDisposable
     /// </summary>
     public abstract void Clear();
     protected abstract void OnDispose();
+
+    internal static Driver GetDefaultDriver()
+    {
+        throw new NotImplementedException();
+    }
 }

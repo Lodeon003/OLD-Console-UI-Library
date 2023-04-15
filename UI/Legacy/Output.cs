@@ -1,4 +1,6 @@
-﻿namespace Lodeon.Terminal.UI
+﻿using Lodeon.Terminal.Graphics.Drivers;
+
+namespace Lodeon.Terminal.UI
 {
     public static class Output
     {

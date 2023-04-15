@@ -2,26 +2,11 @@
 using System.Drawing;
 using System.Runtime.InteropServices;
 
-namespace Lodeon.Terminal;
+namespace Lodeon.Terminal.Graphics.Drivers;
 
 public class AnsiDriver : Driver
 {
-    #region Win32 Imports
-    [DllImport("Kernel32")]
-    private static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
-
-    [DllImport("Kernel32")]
-    private static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
-
-    [DllImport("Kernel32", SetLastError = true)]
-    private static extern IntPtr GetStdHandle(int nStdHandle);
-
-    private const int STD_OUTPUT_HANDLE = -11;
-    private const uint ENABLE_PROCESSED_OUTPUT = 0x0001;
-    private const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
-    #endregion
-
-    private  Pixel _lastPixel = Pixel.Invisible;
+    private Pixel _lastPixel = Pixel.Invisible;
 
     private readonly byte _colorSequenceRed = 7, _colorSequenceGreen = 11, _colorSequenceBlue = 15;
     private readonly char[] _foregroundSequence = "\u001b[38;2;000;000;000m".ToCharArray();
@@ -34,8 +19,8 @@ public class AnsiDriver : Driver
     private Color _foreground;
     private Color _background;
 
-    public  short MaxBufferWidth { get; } = 1_000;
-    public  short MaxBufferHeight { get; } = 1_000;
+    public short MaxBufferWidth { get; } = 1_000;
+    public short MaxBufferHeight { get; } = 1_000;
     public Color Foreground
     {
         get => _foreground;
@@ -67,8 +52,8 @@ public class AnsiDriver : Driver
         }
     }
 
-    public  bool AllowOutOfBounds { get; set; } = true;
-    public  bool AllowTransparentColors { get; set; } = false;
+    public bool AllowOutOfBounds { get; set; } = true;
+    public bool AllowTransparentColors { get; set; } = false;
     public override int ScreenWidth => Math.Min(Console.BufferWidth, Console.WindowWidth);
     public override int ScreenHeight => Math.Min(Console.BufferHeight, Console.WindowHeight);
 
@@ -90,9 +75,9 @@ public class AnsiDriver : Driver
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            IntPtr stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-            var enabled = GetConsoleMode(stdOutHandle, out var outConsoleMode)
-                && SetConsoleMode(stdOutHandle, outConsoleMode | ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+            IntPtr stdOutHandle = WindowsNative.GetStdHandle(WindowsNative.STD_OUTPUT_HANDLE);
+            var enabled = WindowsNative.GetConsoleMode(stdOutHandle, out var outConsoleMode)
+                && WindowsNative.SetConsoleMode(stdOutHandle, outConsoleMode | WindowsNative.ENABLE_PROCESSED_OUTPUT | WindowsNative.ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 
             if (!enabled)
                 throw new InvalidOperationException("Couldn't enable terminal graphics on this windows version");
@@ -190,26 +175,26 @@ public class AnsiDriver : Driver
         Display(display);
 
         int length = Console.BufferWidth * Console.BufferHeight;
-        
+
         Span<char> sp = ArrayPool<char>.Shared.Rent(length).AsSpan();
         sp = sp.Slice(0, length);
 
         for (int i = 0; i < length; i++)
             sp[i] = ' ';
 
-        lock(_lock)
+        lock (_lock)
         {
             Console.Out.Write(sp);
         }
     }
 
-    private  void ModifyForegroundSequence(Color color)
+    private void ModifyForegroundSequence(Color color)
     => ModifyColorSequence(color.Red, color.Green, color.Blue, _foregroundSequence);
 
-    private  void ModifyBackgroundSequence(Color color)
+    private void ModifyBackgroundSequence(Color color)
     => ModifyColorSequence(color.Red, color.Green, color.Blue, _backgroundSequence);
 
-    private  void ModifyColorSequence(byte red, byte green, byte blue, char[] sequenceArray)
+    private void ModifyColorSequence(byte red, byte green, byte blue, char[] sequenceArray)
     {
         string redStr = red.ToString("D3");
         string blueStr = blue.ToString("D3");
@@ -226,7 +211,7 @@ public class AnsiDriver : Driver
             sequenceArray[_colorSequenceGreen + i] = greenStr[i];
         }
     }
-    private  void ModifyCursorSequence(int x, int y)
+    private void ModifyCursorSequence(int x, int y)
     {
         if (x < 0 || y < 0 || x > 99999 || y > 99999)
             throw new NotImplementedException("The array allocates 5 chars for each coordinate");
@@ -265,7 +250,7 @@ public class AnsiDriver : Driver
 
         for (int i = len - 1; i >= 0; i--)
         {
-            buffer[bufferIndex + i] = (char)('0' + (value % 10));
+            buffer[bufferIndex + i] = (char)('0' + value % 10);
             value /= 10;
         }
         return len;
@@ -275,4 +260,6 @@ public class AnsiDriver : Driver
     {
         throw new NotImplementedException();
     }
+
+    protected override void OnDispose() {}
 }

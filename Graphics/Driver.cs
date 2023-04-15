@@ -9,12 +9,13 @@ using Point = System.Drawing.Point;
 /// another source.<br/>
 /// This class implements a static lock to make sure that only one instance of <see cref="Driver"/> at the time can call <see cref="Display(System.ReadOnlySpan{Lodeon.Terminal.Pixel}, System.Drawing.Rectangle, System.Drawing.Point)"/>
 /// </summary>
-public abstract class Driver
+public abstract class Driver : IDisposable
 {
     private static object _lock = new object();
 
     public abstract int ScreenWidth { get; }
     public abstract int ScreenHeight { get; }
+    protected bool Disposed { get; private set; } = false;
 
     /// <summary>
     /// Creates a new instance of this <see cref="Driver"/> class<br/>
@@ -35,12 +36,18 @@ public abstract class Driver
     /// <param name="graphic">An object that implements <see cref="IRenderable"/> interface</param>
     public void Display(IRenderable graphic)
     {
+        if (Disposed)
+            throw new ObjectDisposedException(this.GetType().FullName);
+
         // Get screen area and calculate buffer source area. Width and height are the same for source and destination,
         // but buffer starts at 0 instead of the element's screen position
         Rectangle screenArea = graphic.GetScreenArea();
         Rectangle sourceArea = new Rectangle(0, 0, screenArea.Width, screenArea.Height);
 
-        OnDisplay(graphic.GetGraphics(), sourceArea, new Point(screenArea.X, screenArea.Y));
+        lock (_lock)
+        {
+            OnDisplay(graphic.GetGraphics(), sourceArea, new Point(screenArea.X, screenArea.Y));
+        }
     }
 
     /// <summary>
@@ -52,10 +59,14 @@ public abstract class Driver
     /// <param name="destinationPosition">The element's top-left coordinate on the screen</param>
     public void Display(IRenderable graphic, Rectangle sourceArea)
     {
+        if (Disposed)
+            throw new ObjectDisposedException(this.GetType().FullName);
+
+        // Get screen area to extract element position
+        Rectangle screenArea = graphic.GetScreenArea();
+        
         lock (_lock)
         {
-            // Get screen area to extract element position
-            Rectangle screenArea = graphic.GetScreenArea();
             OnDisplay(graphic.GetGraphics(), sourceArea, new Point(screenArea.X, screenArea.Y));
         }
     }
@@ -69,6 +80,9 @@ public abstract class Driver
     /// <param name="destinationPosition">The element's top-left coordinate on the screen</param>
     public void Display(IRenderable graphic, Rectangle sourceArea, Point destinationPosition)
     {
+        if (Disposed)
+            throw new ObjectDisposedException(this.GetType().FullName);
+
         lock (_lock)
         {
             OnDisplay(graphic.GetGraphics(), sourceArea, destinationPosition);
@@ -81,10 +95,22 @@ public abstract class Driver
     /// <param name="characters"></param>
     public void Display(Span<char> characters, Point destinationPosition)
     {
+        if (Disposed)
+            throw new ObjectDisposedException(this.GetType().FullName);
+
         lock (_lock)
         {
             OnDisplay(characters, destinationPosition);
         }
+    }
+    public void Dispose()
+    {
+        if (Disposed)
+            return;
+
+        OnDispose();
+
+        Disposed = true;
     }
 
     protected abstract void OnDisplay(ReadOnlySpan<Pixel> buffer, Rectangle sourceArea, Point destinationPosition);
@@ -94,4 +120,5 @@ public abstract class Driver
     /// Clears the console buffer
     /// </summary>
     public abstract void Clear();
+    protected abstract void OnDispose();
 }

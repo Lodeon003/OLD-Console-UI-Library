@@ -22,7 +22,7 @@ public class PageInitializer
     {
         TPage page = new TPage();
 
-        if (_wasMain && isMain)
+        if (!_wasMain && isMain)
             _wasMain = true;
         else
             throw new InvalidOperationException("More than one page was set as Main page");

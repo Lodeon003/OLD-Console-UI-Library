@@ -5,18 +5,18 @@ namespace Lodeon.Terminal.UI;
 /// <summary>
 /// The base class for console applications that make use of this' UI library
 /// </summary>
-public abstract class Program
+public abstract class Script
 {
     private Driver? _output;
 
-    public static async Task Run<T>(Driver customDriver) where T : Program, new()
+    public static async Task Run<T>(Driver customDriver) where T : Script, new()
     {
         T program = new T();
         program.Initialize(customDriver);
         await program.Execute();
     }
 
-    public static async Task Run<T>() where T : Program, new()
+    public static async Task Run<T>() where T : Script, new()
     {
         T program = new T();
         program.Initialize(Driver.GetDefaultDriver());
@@ -46,6 +46,7 @@ public abstract class Program
 
 
         Main();
+        throw new Exception("Internal error. Implement input system and run main page");
         await _exitHandle.WaitAsync();
     }
     protected void Exit()
@@ -68,7 +69,7 @@ public abstract class Program
 
     protected virtual void OnExit() { }
     protected virtual void Main() { }
-    protected abstract void OnInitialize(PageInitializer Pages);
+    protected abstract void OnInitialize(PageInitializer pages);
 }
 
 /*

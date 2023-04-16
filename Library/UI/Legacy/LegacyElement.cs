@@ -92,7 +92,7 @@ public abstract class LegacyElement : Element
         if (!IsEnabled || !IsVisible)
             return;
 
-        Out.Display(buffer);
+        Display(buffer);
     }
 
     /// <summary>
@@ -105,7 +105,8 @@ public abstract class LegacyElement : Element
         //if (!IsEnabled || !IsVisible)   // I think this function should work anyway as it doesn't show the object itself
         //    return;
 
-        Out.Display(buffer.GetGraphics(false), buffer.GetSourceArea(), buffer.Position);
+        throw new NotImplementedException("Legacy elements dropped due to lazyness");
+        //Display(buffer.GetGraphics(false), buffer.GetSourceArea(), buffer.Position);
     }
 
     protected Point LocalToScreen(Point localPoint)
@@ -117,7 +118,8 @@ public abstract class LegacyElement : Element
             return;
 
         Point screenPos = LocalToScreen(offset);
-        Out.Display(buffer, new Rectangle(screenPos.X, screenPos.Y, size.X, size.Y), size);
+        throw new NotImplementedException("Legacy elements dropped due to lazyness");
+        //Display(buffer, new Rectangle(screenPos.X, screenPos.Y, size.X, size.Y), size);
     }
 
     private protected void Display(LegacyBuffer buffer, Rectangle screenArea)
@@ -125,7 +127,8 @@ public abstract class LegacyElement : Element
         if (!IsEnabled || !IsVisible)
             return;
 
-        Out.Display(buffer, screenArea);
+        throw new NotImplementedException("Legacy elements dropped due to lazyness");
+        //Display(buffer, screenArea);
     }
 
     public void SetVisible(bool visible)

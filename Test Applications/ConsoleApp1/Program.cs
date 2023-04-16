@@ -6,7 +6,7 @@ using Lodeon.Terminal.UI.Layout;
 
     - Layout property change updates graphics and recalculates LayoutResults
 
-    - Hide output driver from Element objects, add support for display functions that take in element's graphic buffer and merge it
+    [-] Hide output driver from Element objects, add support for display functions that take in element's graphic buffer and merge it
         . with all parent and child buffers
 
     - LayoutElement TreeFromXML with attribute for naming
@@ -47,13 +47,5 @@ class MainPage : LayoutPage
 {
     // No main method?
     // No OnExit method?
-    protected override void OnInitialize()
-    {
-        // Button button = GetElement<Button>("MyButton");
-        // Label label = GetElement<Button>("MyButton");
-
-        // button.OnClick += () => { label.SetText("Button Clicked!"); };
-        // button.OnEndClick += () => { label.SetText("Button not clicked"); };
-        Console.WriteLine("Cacca");
-    }
+    
 }

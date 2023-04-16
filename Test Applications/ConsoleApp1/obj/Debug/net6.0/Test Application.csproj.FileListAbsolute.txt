@@ -16,3 +16,21 @@ C:\Users\minec\Source\Repos\Lodeon003\Test Application\obj\Debug\net6.0\refint\T
 C:\Users\minec\Source\Repos\Lodeon003\Test Application\obj\Debug\net6.0\Test Application.pdb
 C:\Users\minec\Source\Repos\Lodeon003\Test Application\obj\Debug\net6.0\Test Application.genruntimeconfig.cache
 C:\Users\minec\Source\Repos\Lodeon003\Test Application\obj\Debug\net6.0\ref\Test Application.dll
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.csproj.AssemblyReference.cache
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.AssemblyInfoInputs.cache
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.AssemblyInfo.cs
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.csproj.CoreCompileInputs.cache
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.dll
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\obj\Debug\net6.0\refint\Test Application.dll
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.pdb
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\bin\Debug\net6.0\Test Application.exe
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\bin\Debug\net6.0\Test Application.deps.json
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\bin\Debug\net6.0\Test Application.runtimeconfig.json
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\bin\Debug\net6.0\Test Application.dll
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\bin\Debug\net6.0\Test Application.pdb
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\bin\Debug\net6.0\ANSI GUI Library.dll
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\bin\Debug\net6.0\ANSI GUI Library.pdb
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.csproj.CopyComplete
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.genruntimeconfig.cache
+C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\obj\Debug\net6.0\ref\Test Application.dll

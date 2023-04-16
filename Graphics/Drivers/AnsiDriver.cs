@@ -61,7 +61,7 @@ public class AnsiDriver : Driver
 
     /// <summary>
     /// <inheritdoc/>
-    /// - An exception will also be thrown if this is a windows process and can't enable "ENABLE_VIRTUAL_TERMINAL_PROCESSING"
+    /// - An exception will be thrown if this is a windows process and can't enable "ENABLE_VIRTUAL_TERMINAL_PROCESSING"
     /// and "ENABLE_PROCESSED_OUTPUT" via "SetConsoleMode" in "Kernel32"
     /// </summary>
     /// <exception cref="InvalidOperationException"></exception>

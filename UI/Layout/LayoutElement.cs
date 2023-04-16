@@ -6,9 +6,9 @@ using Rectangle = System.Drawing.Rectangle;
 
 namespace Lodeon.Terminal.UI.Layout;
 
-public abstract class LayoutElement : ITransform
+public abstract class LayoutElement : Element, ITransform
 {
-    public LayoutElement(ITransform parent, GraphicBuffer screenBuffer, LayoutElement[] children)
+    public LayoutElement(ITransform parent, LayoutElement[] children)
     {
         ArgumentNullException.ThrowIfNull(parent);
         Parent = parent;
@@ -17,38 +17,40 @@ public abstract class LayoutElement : ITransform
         _childrenResults = new LayoutResult[children.Length];
         _children = children;
 
-        ArgumentNullException.ThrowIfNull(screenBuffer);
-        _screenBuffer = screenBuffer;
+        _outBuffer = new GraphicBuffer();
 
         PropertyChanged += OnPropertyChanged;
     }
 
     public ITransform Parent { get; private init; }
-    private LayoutElement[] _children;
+
+    private readonly GraphicBuffer _outBuffer;
     private LayoutResult[] _childrenResults;
-    private GraphicBuffer _screenBuffer;
+    private LayoutElement[] _children;
+
+    public abstract LayoutResult[] GetResultArray();
+    public abstract LayoutResult[] GetParentResultArray();
+    protected abstract void OnResize(GraphicBuffer screenBuffer, Pixel4 screenArea);
+
     #region Events
+    // Delegates
     public delegate void LayoutElementArgs(LayoutElement element);
     public delegate void LayoutPointArgs(LayoutElement element, Point point);
     public delegate void LayoutPoint4Args(LayoutElement element, Point4 point);
 
-    internal static LayoutElement? TreeFromXml(string path)
-    {
-        throw new NotImplementedException();
-    }
 
     // ITransform Events
     public event TransformChangedEvent? PositionChanged;
     public event TransformChangedEvent? SizeChanged;
 
+    // Default Events
     public event LayoutElementArgs? PropertyChanged;
-
     public event LayoutPoint4Args? MarginChanged;
     public event LayoutPoint4Args? BorderChanged;
     public event LayoutPoint4Args? PaddingChanged;
     #endregion
     
-    #region Properties
+    #region Layout Properties
     public LayoutPosition PositionKind { get; set; }
 
     private Point _position;
@@ -149,8 +151,6 @@ public abstract class LayoutElement : ITransform
 
     public ReadOnlySpan<LayoutElement> GetChildren()
         => _children;
-    public abstract LayoutResult[] GetResultArray();
-    public abstract LayoutResult[] GetParentResultArray();
 
     public LayoutResult Compile()
     {
@@ -165,6 +165,18 @@ public abstract class LayoutElement : ITransform
                                                    null, LayoutPosition.Absolute);
 
         return this.Compile(rootLayout, rootStack);
+    }
+    public PixelPoint GetPosition()
+    {
+        throw new NotImplementedException();
+    }
+
+    public PixelPoint GetSize()
+    {
+        throw new NotImplementedException();
+        return Parent.GetSize();
+        // Calculate from parengt
+        // Derive page frmo ITransform and return it's pixel size
     }
 
     private LayoutResult Compile(LayoutResult parentLayout, LayoutStack parentStack)
@@ -243,17 +255,10 @@ public abstract class LayoutElement : ITransform
         return new LayoutResult(totalArea, actualArea, contentArea, childResults, PositionKind);
     }
 
-    public PixelPoint GetPosition()
-    {
-        throw new NotImplementedException();
-    }
 
-    public PixelPoint GetSize()
+    internal static LayoutElement? TreeFromXml(string path)
     {
         throw new NotImplementedException();
-        return Parent.GetSize();
-        // Calculate from parengt
-        // Derive page frmo ITransform and return it's pixel size
     }
 
     private void OnPropertyChanged(LayoutElement sender)
@@ -261,6 +266,10 @@ public abstract class LayoutElement : ITransform
 
     private LayoutResult Update()
     {
+        // Make it so when property updates the LayoutResult gets saved on the object itself
+        // Have an event to children's PropertyChanged event and make it so that when a child's property change,
+        // This' layout recalculates, recaculating all of the children 
+
         if(Parent is not LayoutElement parent)
         {
             Pixel4 area = new Pixel4(Parent.GetPosition(), Parent.GetSize());
@@ -270,11 +279,9 @@ public abstract class LayoutElement : ITransform
         LayoutResult parentLayout = parent.Update();
         LayoutResult thisLayout = GetLayout(parentLayout, default, null);
 
-        Draw(_screenBuffer, thisLayout.ActualArea);
+        OnResize(_outBuffer, thisLayout.ActualArea);
         return thisLayout;
     }
-
-    protected abstract void Draw(GraphicBuffer screenBuffer, Pixel4 screenArea);
 
     //private penis penis penis penis penis penis penis penis penis vagina porn fuck fuck homosexual sex balls and cock cum cum cum mhhhhhhhhhhhh
 }

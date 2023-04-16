@@ -3,31 +3,12 @@ using System.Drawing;
 
 namespace Lodeon.Terminal.UI;
 
-public enum HorizontalAlignment
-{
-    Left, Right, Stretch
-}
-
-public enum VerticalAlignment
-{
-    Top, Bottom, Stretch
-}
-
 /// <summary>
 /// [!] Never tested
 /// </summary>
-public abstract class UIElement
+public abstract class LegacyElement : Element
 {
     public static GraphicBuffer SharedBuffer { get; } = new GraphicBuffer();
-
-    public short MinWidth;
-    public short MaxWidth;
-    public short MinHeight;
-    public short MaxHeight;
-    public VerticalAlignment VerticalAlignment;
-    public HorizontalAlignment HorizontalAlignment;
-    // If alignement is 'stretch' min and max values are taken into acount
-    // If alignement is fixed size will always be the same size and normal values can be taken into acount
 
     public LegacyPage Page { get; private set; }
     public Point Position { get; private set; }
@@ -35,15 +16,17 @@ public abstract class UIElement
     public short Width { get; private set; }
     public bool IsVisible { get; private set; } = true;
     public bool IsEnabled { get; private set; } = false;
+   
 
-    public UIElement(LegacyPage page)
+    public LegacyElement(LegacyPage page)
     {
         if (page == null)
             throw new ArgumentNullException(nameof(page));
 
         Page = page;
     }
-    public UIElement(short x, short y, short width, short height, LegacyPage page)
+
+    public LegacyElement(short x, short y, short width, short height, LegacyPage page)
     {
         if (page == null)
             throw new ArgumentNullException(nameof(page));
@@ -84,14 +67,14 @@ public abstract class UIElement
         OnChangeSize();
     }
     /// <summary>
-    /// Method called by a <see cref="Page"/> object when this <see cref="UIElement"/> is added to the page via <see cref="LegacyPage.RegisterElement(UIElement)"/>
-    /// In this method every item should register all ui buffers to the page via <see cref="LegacyPage.RegisterBuffer(UIBuffer)"/>
+    /// Method called by a <see cref="Page"/> object when this <see cref="LegacyElement"/> is added to the page via <see cref="LegacyPage.RegisterElement(LegacyElement)"/>
+    /// In this method every item should register all ui buffers to the page via <see cref="LegacyPage.RegisterBuffer(LegacyBuffer)"/>
     /// </summary>
     internal abstract void OnRegister();
 
     /// <summary>
-    /// Method called by a <see cref="Page"/> object when this <see cref="UIElement"/> is removed from a page via <see cref="LegacyPage.UnregisterElement(UIElement)"/><br/>
-    /// In this method every item should unregister their UI buffers to the page via <see cref="LegacyPage.UnregisterBuffer(UIBuffer)"/>
+    /// Method called by a <see cref="Page"/> object when this <see cref="LegacyElement"/> is removed from a page via <see cref="LegacyPage.UnregisterElement(LegacyElement)"/><br/>
+    /// In this method every item should unregister their UI buffers to the page via <see cref="LegacyPage.UnregisterBuffer(LegacyBuffer)"/>
     /// </summary>
     internal abstract void OnUnregister();
     protected virtual void OnBeforeChangePosition() { }
@@ -104,12 +87,12 @@ public abstract class UIElement
     /// Display the buffer to the screen
     /// </summary>
     /// <param name="buffer"></param>
-    private protected void Display(UIBuffer buffer)
+    private protected void Display(LegacyBuffer buffer)
     {
         if (!IsEnabled || !IsVisible)
             return;
 
-        AnsiDriver.Display(buffer);
+        Out.Display(buffer);
     }
 
     /// <summary>
@@ -117,32 +100,32 @@ public abstract class UIElement
     /// (This method calculates and displays buffers behind the one specified without displaying itself)
     /// </summary>
     /// <param name="buffer"></param>
-    private protected void Clear(UIBuffer buffer)
+    private protected void Clear(LegacyBuffer buffer)
     {
         //if (!IsEnabled || !IsVisible)   // I think this function should work anyway as it doesn't show the object itself
         //    return;
 
-        AnsiDriver.Display(buffer.GetGraphics(false), buffer.GetSourceArea(), buffer.Position);
+        Out.Display(buffer.GetGraphics(false), buffer.GetSourceArea(), buffer.Position);
     }
 
     protected Point LocalToScreen(Point localPoint)
         => new Point(localPoint.X + this.Position.X, localPoint.Y + this.Position.Y);
 
-    private protected void Display(UIBuffer buffer, Point offset, Point size)
+    private protected void Display(LegacyBuffer buffer, Point offset, Point size)
     {
         if (!IsEnabled || !IsVisible)
             return;
 
         Point screenPos = LocalToScreen(offset);
-        AnsiDriver.Display(buffer, new Rectangle(screenPos.X, screenPos.Y, size.X, size.Y), size);
+        Out.Display(buffer, new Rectangle(screenPos.X, screenPos.Y, size.X, size.Y), size);
     }
 
-    private protected void Display(UIBuffer buffer, Rectangle screenArea)
+    private protected void Display(LegacyBuffer buffer, Rectangle screenArea)
     {
         if (!IsEnabled || !IsVisible)
             return;
 
-        AnsiDriver.Display(buffer, screenArea);
+        Out.Display(buffer, screenArea);
     }
 
     public void SetVisible(bool visible)

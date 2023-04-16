@@ -2,6 +2,7 @@ using Lodeon.Terminal;
 using System;
 using Rectangle = System.Drawing.Rectangle;
 using Point = System.Drawing.Point;
+using Lodeon.Terminal.Graphics.Drivers;
 
 /// <summary>
 /// Base class for graphic drivers. A graphic driver is used by the library as an interface to display graphics. <br/>
@@ -142,7 +143,11 @@ public abstract class Driver : IDisposable
 
     internal static Driver GetDefaultDriver()
     {
-        throw new NotImplementedException();
+        if(OperatingSystem.IsWindows())
+        {
+            return new WindowsDriver();
+        }
+        return new AnsiDriver();
     }
 
     public abstract void SetBackground(Color background);

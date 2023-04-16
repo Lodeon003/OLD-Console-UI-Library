@@ -15,7 +15,7 @@ namespace Lodeon.Terminal.UI
                 return;
 
             // Set background as page's background
-            AnsiDriver.Clear(page.Background);
+            //Driver.Clear(page.Background);
 
             OnPageChanged?.Invoke(page);
             CurrentPage = page;

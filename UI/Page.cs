@@ -2,12 +2,8 @@
 
 public abstract class Page
 {
-    internal Page(Driver output)
-    {
-        Output = output;
-    }
-
-    protected Driver Output { get; private set; }
+    protected Driver Out { get { if (_driver is null) throw new ArgumentNullException(this.GetType().FullName, "Element was not initialized"); return _driver; } }
+    private Driver? _driver;
     public bool IsMain { get; private set; }
 
     /// <summary>
@@ -17,7 +13,7 @@ public abstract class Page
     /// <param name="isMain"></param>
     public void Initialize(Driver driver, bool isMain)
     {
-        Output = driver;
+        _driver = driver;
         IsMain = isMain;
     }
 

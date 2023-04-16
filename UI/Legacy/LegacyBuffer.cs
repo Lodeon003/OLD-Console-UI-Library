@@ -7,51 +7,51 @@ namespace Lodeon.Terminal.UI;
 /// <summary>
 /// [!] Never tested
 /// </summary>
-internal class UIBuffer : GraphicBuffer
+internal class LegacyBuffer : GraphicBuffer
 {
     public static GraphicBuffer SharedBuffer { get; } = new GraphicBuffer();
 
-    public UIBuffer(UIElement parent, short baseWidth, short baseHeight) : base(baseWidth, baseHeight)
+    public LegacyBuffer(LegacyElement parent, short baseWidth, short baseHeight) : base(baseWidth, baseHeight)
     {
         if (parent == null)
-            throw new ArgumentNullException($"Buffers should be contained in {nameof(UIElement)}. A buffer shouldn't be created without a parent object");
+            throw new ArgumentNullException($"Buffers should be contained in {nameof(LegacyElement)}. A buffer shouldn't be created without a parent object");
         Parent = parent;
     }
-    public UIBuffer(UIElement parent, short baseWidth, params Pixel[] buffer) : base(baseWidth, buffer)
+    public LegacyBuffer(LegacyElement parent, short baseWidth, params Pixel[] buffer) : base(baseWidth, buffer)
     {
         if (parent == null)
-            throw new ArgumentNullException($"Buffers should be contained in {nameof(UIElement)}. A buffer shouldn't be created without a parent object");
+            throw new ArgumentNullException($"Buffers should be contained in {nameof(LegacyElement)}. A buffer shouldn't be created without a parent object");
         Parent = parent;
     }
-    public UIBuffer(UIElement parent, short baseWidth, short baseHeight, params Pixel[] buffer) : base(baseWidth, baseHeight, buffer)
+    public LegacyBuffer(LegacyElement parent, short baseWidth, short baseHeight, params Pixel[] buffer) : base(baseWidth, baseHeight, buffer)
     {
         if (parent == null)
-            throw new ArgumentNullException($"Buffers should be contained in {nameof(UIElement)}. A buffer shouldn't be created without a parent object");
+            throw new ArgumentNullException($"Buffers should be contained in {nameof(LegacyElement)}. A buffer shouldn't be created without a parent object");
         Parent = parent;
     }
-    public UIBuffer(UIElement parent, Rectangle screenArea, Pixel[] buffer) : base(screenArea, buffer)
+    public LegacyBuffer(LegacyElement parent, Rectangle screenArea, Pixel[] buffer) : base(screenArea, buffer)
     {
         if (parent == null)
-            throw new ArgumentNullException($"Buffers should be contained in {nameof(UIElement)}. A buffer shouldn't be created without a parent object");
+            throw new ArgumentNullException($"Buffers should be contained in {nameof(LegacyElement)}. A buffer shouldn't be created without a parent object");
         Parent = parent;
     }
-    public UIBuffer(UIElement parent, Rectangle screenArea) : base(screenArea)
+    public LegacyBuffer(LegacyElement parent, Rectangle screenArea) : base(screenArea)
     {
         if (parent == null)
-            throw new ArgumentNullException($"Buffers should be contained in {nameof(UIElement)}. A buffer shouldn't be created without a parent object");
+            throw new ArgumentNullException($"Buffers should be contained in {nameof(LegacyElement)}. A buffer shouldn't be created without a parent object");
         Parent = parent;
     }
-    public UIBuffer(UIElement parent)
+    public LegacyBuffer(LegacyElement parent)
     {
         if (parent == null)
-            throw new ArgumentNullException($"Buffers should be contained in {nameof(UIElement)}. A buffer shouldn't be created without a parent object");
+            throw new ArgumentNullException($"Buffers should be contained in {nameof(LegacyElement)}. A buffer shouldn't be created without a parent object");
         Parent = parent;
     }
 
-    internal delegate void ResizeDelegate(UIBuffer sender, short width, short height);
+    internal delegate void ResizeDelegate(LegacyBuffer sender, short width, short height);
     internal event ResizeDelegate? OnResize;
 
-    internal delegate void MoveDelegate(UIBuffer sender, int x, int y);
+    internal delegate void MoveDelegate(LegacyBuffer sender, int x, int y);
     internal event MoveDelegate? OnMove;
 
     /// <summary>
@@ -59,11 +59,11 @@ internal class UIBuffer : GraphicBuffer
     /// </summary>
     /// <param name="sender">The object that invoked the event</param>
     /// <param name="screenArea">The new portion of screen occupied by the object (after size is updated)</param>
-    internal delegate void ScreenAreaChangeDelegate(UIBuffer sender, Rectangle screenArea);
+    internal delegate void ScreenAreaChangeDelegate(LegacyBuffer sender, Rectangle screenArea);
     internal event ScreenAreaChangeDelegate? OnScreenAreaChanged;
 
-    internal UIElement Parent { get; }
-    private List<UIBuffer> _overlappingBuffers = new List<UIBuffer>();
+    internal LegacyElement Parent { get; }
+    private List<LegacyBuffer> _overlappingBuffers = new List<LegacyBuffer>();
     //private bool _displayForeground = false;
 
     public override void Resize(short width, short height)
@@ -127,7 +127,7 @@ internal class UIBuffer : GraphicBuffer
     /// Adds a buffer to it's list of overlapping buffers if the area of that other buffer is partially over this buffer's area
     /// <br/>[Called by <see cref="Parent"/>'s <see cref="LegacyPage"/> whenever any buffer in the same page changes position, width or height]
     /// </summary>
-    internal void CheckOverlappingBuffer(UIBuffer buffer, Rectangle screenArea)
+    internal void CheckOverlappingBuffer(LegacyBuffer buffer, Rectangle screenArea)
     {
         if (buffer == this)
             return;

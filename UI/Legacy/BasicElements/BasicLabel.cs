@@ -1,23 +1,23 @@
 ﻿namespace Lodeon.Terminal.UI.Legacy.BasicElements
 {
-    public class BasicLabel : UIElement
+    public class BasicLabel : LegacyElement
     {
         public Color Background { get; set; } = Color.Invisible;
         public Color Foreground { get; set; } = Color.White;
 
         private string _text = string.Empty;
-        private UIBuffer _buffer;
+        private LegacyBuffer _buffer;
 
         public BasicLabel(LegacyPage page, string text) : base(page)
         {
             _text = text;
-            _buffer = new UIBuffer(this, Width, Height);
+            _buffer = new LegacyBuffer(this, Width, Height);
             UpdateContent();
         }
 
         public BasicLabel(LegacyPage page) : base(page)
         {
-            _buffer = new UIBuffer(this, Width, Height);
+            _buffer = new LegacyBuffer(this, Width, Height);
             UpdateContent();
         }
 

@@ -1,0 +1,33 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v6.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v6.0": {
+      "Test Application/1.0.0": {
+        "runtime": {
+          "Test Application.dll": {}
+        }
+      },
+      "ANSI GUI Library/1.0.0": {
+        "runtime": {
+          "ANSI GUI Library.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Test Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "ANSI GUI Library/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

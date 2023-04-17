@@ -1,5 +1,4 @@
 ﻿using Lodeon.Terminal.UI.Layout;
-
 namespace Lodeon.Terminal.UI;
 
 /// <summary>
@@ -7,15 +6,12 @@ namespace Lodeon.Terminal.UI;
 /// </summary>
 public abstract class Script
 {
-    private Driver? _output;
-
     public static async Task Run<T>(Driver customDriver) where T : Script, new()
     {
         T program = new T();
         program.Initialize(customDriver);
         await program.Execute();
     }
-
     public static async Task Run<T>() where T : Script, new()
     {
         T program = new T();
@@ -23,47 +19,57 @@ public abstract class Script
         await program.Execute();
     }
 
-    private SemaphoreSlim? _exitHandle;
+
+    private Driver? _output;
     private Dictionary<string, Page>? _pages;
+    private CancellationTokenSource? _exitSource;
+    private Page? _currentPage;
+    private GraphicBuffer? _outputBuffer;
 
     private void Initialize(Driver driver)
-    => _output = driver;
+    {
+        _output = driver;
+    }
 
-    internal async Task Execute()
+    private async Task Execute()
     {
         if (_output is null)
             throw new Exception("Internal error. Program was run without it being initialized");
 
-        _exitHandle = new SemaphoreSlim(1, 1);
         _pages = new Dictionary<string, Page>();
+        _exitSource = new CancellationTokenSource();
+        _outputBuffer = new GraphicBuffer();
 
-        OnInitialize(new PageInitializer(_pages, _output));
+        PageInitializer pages = new PageInitializer(_pages, _output, _outputBuffer);
+        this.OnInitialize(pages);
 
-        Page mainPage;
-        foreach (Page page in _pages.Values)
-            if (page.IsMain)
-                mainPage = page;
+        Task mainTask = Task.Run(Main, _exitSource.Token);
+        Task exitTask = Task.Run(() => WaitHandle.WaitAny(new[] { _exitSource.Token.WaitHandle }));
 
-
-        Main();
-        throw new Exception("Internal error. Implement input system and run main page");
-        await _exitHandle.WaitAsync();
+        try {
+            await Task.WhenAll(mainTask, exitTask);
+        }
+        catch (OperationCanceledException) { }
     }
+
     protected void Exit()
     {
-        if (_exitHandle == null)
+        if (_exitSource == null)
             return;
 
-        try
-        {
-            _exitHandle.Release();
+        try {
+            _exitSource.Cancel();
         }
         catch (ObjectDisposedException) { }
 
         // Clear garbage
-        _exitHandle.Dispose();
-        _exitHandle = null;
+        _exitSource.Dispose();
+        _exitSource = null;
+
+        _currentPage.Exit();
+        _currentPage = null;
         _pages = null;
+
         OnExit();
     }
 

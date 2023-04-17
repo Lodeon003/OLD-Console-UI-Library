@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Text.Encodings.Web;
 
 namespace Lodeon.Terminal;
 
@@ -7,17 +8,16 @@ namespace Lodeon.Terminal;
 /// <summary>
 /// [!] Testing. <see cref="Overlay(GraphicBuffer)"/> doesn't work correctly
 /// </summary>
-public struct GraphicBuffer : IRenderable
+public class GraphicBuffer : IRenderable
 {
     // STATIC Properties
     private static Pixel[] EmptyBuffer { get; } = new Pixel[] { Pixel.Invisible };
-
+    
     // PUBLIC Properties
     public short Width { get; private set; }
     public short Height { get; private set; }
     public Point Position { get; private set; }
     public int Length => Width * Height;
-
     // PUBLIC Indexers
     public Pixel this[int index]
         => _buffer[index];
@@ -36,6 +36,7 @@ public struct GraphicBuffer : IRenderable
         _buffer = new Pixel[baseWidth * baseHeight];
         Fill(Pixel.Invisible);
     }
+
     public GraphicBuffer(short baseWidth, params Pixel[] buffer)
     {
         if (buffer == null)
@@ -92,7 +93,7 @@ public struct GraphicBuffer : IRenderable
         _buffer = EmptyBuffer;
     }
 
-    public void Write(short x, short y, Pixel pixel)
+    public void Write(int x, int y, Pixel pixel)
         => _buffer[x + Width * y] = pixel;
     public void Write(int index, Pixel pixel)
         => _buffer[index] = pixel;
@@ -126,7 +127,7 @@ public struct GraphicBuffer : IRenderable
 
         if (copy)
         {
-            // Implememt bidimensional array data copying from old array to new one
+            throw new NotImplementedException("Copy not implemented");            // Implememt bidimensional array data copying from old array to new one
         }
 
         _buffer = newBuffer;
@@ -185,6 +186,49 @@ public struct GraphicBuffer : IRenderable
         // Get other's buffer direclty. GetGraphics() can be overridden and not return it's buffer. This can cause an infinite loop
         ReadOnlySpan<Pixel> thisGraphics = _buffer;
         ReadOnlySpan<Pixel> otherGraphics = otherElement._buffer;
+
+        // Iterate through all overlapping screen positions
+        for (int y = overlappingArea.Top; y < overlappingArea.Bottom; y++)
+        {
+            for (int x = overlappingArea.Left; x < overlappingArea.Right; x++)
+            {
+                // x = [screen x coordinate] - [buffer's screen x position]
+                // y = [screen y coordinate] - [buffer's screen y position] * [buffer's width]
+                // Buffers are one-dimension so every Y is stored with an offset of [buffer's width] one from the other 
+
+                int thisIndex = (x - thisArea.Left) + (y - thisArea.Top) * thisArea.Width;
+                int otherIndex = (x - otherArea.Left) + (y - otherArea.Top) * otherArea.Width;
+
+                Pixel result = Pixel.Overlay(thisGraphics[thisIndex], otherGraphics[otherIndex]);
+                Write(thisIndex, result);
+            }
+        }
+    }
+
+    /// <summary>
+    /// [!] Reviewed but To Test [!]<br/>Modifies this <see cref="GraphicBuffer"/> by overlaying <paramref name="overlay"/> pixels onto this instance's pixels
+    /// </summary>
+    /// <param name="overlay"></param>
+    public void Overlay(ReadOnlySpan<Pixel> buffer, Rectangle screenArea)
+    {
+        Rectangle thisArea = this.GetScreenArea();
+        Rectangle otherArea = screenArea;
+
+        // Rectangle.IntersectsWith returns false if rectangles are empty so if a rectangle is empty just ignore it
+        if (otherArea.Width == 0 || otherArea.Height == 0)
+            return;
+
+        // Debug method
+        if (!thisArea.IntersectsWith(otherArea))
+            throw new Exception($"The caller buffer and the specified buffer are not overlayed");
+
+        // Overlapping screen area
+        Rectangle overlappingArea = thisArea;
+        overlappingArea.Intersect(otherArea);
+
+        // Get other's buffer direclty. GetGraphics() can be overridden and not return it's buffer. This can cause an infinite loop
+        ReadOnlySpan<Pixel> thisGraphics = _buffer;
+        ReadOnlySpan<Pixel> otherGraphics = buffer;
 
         // Iterate through all overlapping screen positions
         for (int y = overlappingArea.Top; y < overlappingArea.Bottom; y++)

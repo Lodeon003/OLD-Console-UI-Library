@@ -8,7 +8,7 @@ namespace Lodeon.Terminal.UI.Layout;
 
 public abstract class LayoutElement : Element
 {
-    public LayoutElement(ITransform parent, LayoutElement[] children) : base(parent)
+    public LayoutElement(LayoutElement[] children)
     {
         ArgumentNullException.ThrowIfNull(children);
         _childrenResults = new LayoutResult[children.Length];
@@ -160,18 +160,6 @@ public abstract class LayoutElement : Element
                                                    null, LayoutPosition.Absolute);
 
         return this.Compile(rootLayout, rootStack);
-    }
-    public PixelPoint GetPosition()
-    {
-        throw new NotImplementedException();
-    }
-
-    public PixelPoint GetSize()
-    {
-        throw new NotImplementedException();
-        return Parent.GetSize();
-        // Calculate from parengt
-        // Derive page frmo ITransform and return it's pixel size
     }
 
     private LayoutResult Compile(LayoutResult parentLayout, LayoutStack parentStack)

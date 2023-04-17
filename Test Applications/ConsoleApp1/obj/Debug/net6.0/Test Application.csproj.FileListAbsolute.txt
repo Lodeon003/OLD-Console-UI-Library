@@ -34,3 +34,21 @@ C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\Conso
 C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.csproj.CopyComplete
 C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.genruntimeconfig.cache
 C:\Users\minec\source\repos\Lodeon003\Console-UI-Library\Test Applications\ConsoleApp1\obj\Debug\net6.0\ref\Test Application.dll
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\bin\Debug\net6.0\Test Application.exe
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\bin\Debug\net6.0\Test Application.deps.json
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\bin\Debug\net6.0\Test Application.runtimeconfig.json
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\bin\Debug\net6.0\Test Application.dll
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\bin\Debug\net6.0\Test Application.pdb
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\bin\Debug\net6.0\ANSI GUI Library.dll
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\bin\Debug\net6.0\ANSI GUI Library.pdb
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.csproj.AssemblyReference.cache
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.GeneratedMSBuildEditorConfig.editorconfig
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.AssemblyInfoInputs.cache
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.AssemblyInfo.cs
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.csproj.CoreCompileInputs.cache
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.csproj.CopyComplete
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.dll
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\obj\Debug\net6.0\refint\Test Application.dll
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.pdb
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\obj\Debug\net6.0\Test Application.genruntimeconfig.cache
+E:\Documenti\C# Programs\ANSI GUI Library\1.4\Test Applications\ConsoleApp1\obj\Debug\net6.0\ref\Test Application.dll

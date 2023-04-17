@@ -1,4 +1,6 @@
-﻿namespace Lodeon.Terminal.UI.Legacy.BasicElements
+﻿using Lodeon.Terminal.UI.Units;
+
+namespace Lodeon.Terminal.UI.Legacy.BasicElements
 {
     public class BasicLabel : LegacyElement
     {
@@ -73,6 +75,16 @@
             _buffer.Resize(Width, Height);
             UpdateContent();
             Display(_buffer);
+        }
+
+        public override PixelPoint GetPosition()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override PixelPoint GetSize()
+        {
+            throw new NotImplementedException();
         }
     }
 }

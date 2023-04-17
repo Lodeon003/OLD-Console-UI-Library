@@ -1,4 +1,5 @@
 ﻿using Lodeon.Terminal.Graphics;
+using Lodeon.Terminal.UI.Units;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -17,17 +18,20 @@ public abstract class Element : ITransform, IRenderable
     protected GraphicCanvas Canvas { get { if (_canvas == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _canvas; } }
     protected Page Page { get { if (_page == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _page; } }
     protected ReadonlyGraphicBuffer CanvasView { get { if (_canvasView == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _canvasView; } }
-    public ITransform Parent { get; private init; }
+    public ITransform Parent { get { if (_parent == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _parent; } }
 
-    private GraphicCanvas? _canvas;
-    private GraphicBuffer _buffer;
-    private Page? _page;
     private ReadonlyGraphicBuffer? _canvasView;
+    private GraphicCanvas? _canvas;
+    private GraphicBuffer? _buffer;
+    private Page? _page;
+    private ITransform? _parent;
 
     public delegate void DisplayRequestedDel(ReadonlyGraphicBuffer graphic);
     public event DisplayRequestedDel? DisplayRequested;
+    public event TransformChangedEvent? PositionChanged;
+    public event TransformChangedEvent? SizeChanged;
 
-    public void Initialize(Page page, GraphicBuffer buffer)
+    public void Initialize(Page page, GraphicBuffer buffer, ITransform parent)
     {
         ArgumentNullException.ThrowIfNull(buffer);
         _buffer = buffer;
@@ -43,41 +47,20 @@ public abstract class Element : ITransform, IRenderable
     }
 
     protected void Display()
-    {
-        Pixel[] array = ArrayPool<Pixel>.Shared.Rent(buffer.Length);
-        GraphicBuffer outBuffer = new GraphicBuffer(buffer.Position, array, Buffer.Length); // Allocate on stack?
-        buffer.Fill(Pixel.Empty);
-
-        OverlayParents(outBuffer);
-        buffer.Overlay(outBuffer);
-        OverlayChildren(outBuffer);
-
-        _driver.Display(outBuffer);
-    }
-
-    private void OverlayChildren(GraphicBuffer output)
-    {
-        ReadOnlySpan<Element> children = GetChildren();
-
-        for(int i = 0; i < children; i++)
-            output.Overlay(children[i]);
-
-        for(int i = 0; i < children; i++)
-            children[i].OverlayChildren(output);
-    }
-
-    private void OverlayParents(GraphicBuffer output)
-    {
-        // Recursive. Arrive to root of element tree
-        if(Parent is Element)
-           OverlayParents(output);
-
-        output.Overlay(Buffer);
-    }
+        => Page.Display(this);
 
     public ReadOnlySpan<Pixel> GetGraphics()
-        => _buffer.GetGraphics();
+        => Buffer.GetGraphics();
 
-    public Point GetScreenArea()
-        => _buffer.GetScreenArea();
+    public Rectangle GetScreenArea()
+        => Buffer.GetScreenArea();
+
+    public abstract PixelPoint GetPosition();
+
+    public abstract PixelPoint GetSize();
+
+    internal Span<Element> GetChildren()
+    {
+        throw new NotImplementedException();
+    }
 }

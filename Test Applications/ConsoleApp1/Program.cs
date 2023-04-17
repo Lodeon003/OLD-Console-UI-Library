@@ -45,7 +45,5 @@ class MyProgram : Script
 
 class MainPage : LayoutPage
 {
-    // No main method?
-    // No OnExit method?
-    
+        
 }

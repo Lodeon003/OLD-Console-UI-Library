@@ -7,7 +7,7 @@ namespace Lodeon.Terminal;
 /// <summary>
 /// [!] Testing. <see cref="Overlay(GraphicBuffer)"/> doesn't work correctly
 /// </summary>
-public class GraphicBuffer : IRenderable
+public struct GraphicBuffer : IRenderable
 {
     // STATIC Properties
     private static Pixel[] EmptyBuffer { get; } = new Pixel[] { Pixel.Invisible };

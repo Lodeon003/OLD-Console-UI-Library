@@ -18,11 +18,9 @@ public abstract class Page
     }
 
     protected abstract void Load();
-    
     // These two: to implement
     //protected abstract void Main();
     //protected abstract void OnExit();
-    
     
     //protected virtual void OnInitialize() { }
 }

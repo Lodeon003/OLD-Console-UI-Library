@@ -6,13 +6,10 @@ using Rectangle = System.Drawing.Rectangle;
 
 namespace Lodeon.Terminal.UI.Layout;
 
-public abstract class LayoutElement : Element, ITransform
+public abstract class LayoutElement : Element
 {
-    public LayoutElement(ITransform parent, LayoutElement[] children)
+    public LayoutElement(ITransform parent, LayoutElement[] children) : base(parent)
     {
-        ArgumentNullException.ThrowIfNull(parent);
-        Parent = parent;
-
         ArgumentNullException.ThrowIfNull(children);
         _childrenResults = new LayoutResult[children.Length];
         _children = children;
@@ -21,8 +18,6 @@ public abstract class LayoutElement : Element, ITransform
 
         PropertyChanged += OnPropertyChanged;
     }
-
-    public ITransform Parent { get; private init; }
 
     private readonly GraphicBuffer _outBuffer;
     private LayoutResult[] _childrenResults;

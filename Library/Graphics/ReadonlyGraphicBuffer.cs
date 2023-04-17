@@ -6,6 +6,8 @@ namespace Lodeon.Terminal.Graphics
     {
         private GraphicBuffer _buffer;
 
+        public int Length => _buffer.Length;
+
         public ReadonlyGraphicBuffer(GraphicBuffer buffer)
         {
             ArgumentNullException.ThrowIfNull(buffer);

@@ -12,6 +12,7 @@ public abstract class Page
 
     protected GraphicBuffer ProgramBuffer { get { if (_programBuffer is null) throw new ArgumentNullException(nameof(ProgramBuffer), "Element was not initialized"); return _programBuffer; } }
     private GraphicBuffer? _programBuffer;
+
     public bool IsMain { get; private set; }
 
     /// <summary>
@@ -58,12 +59,24 @@ public abstract class Page
 
     private void ProgramExitCallback()
     {
-        OnExit();
+        OnDeselect();
         Program.OnExiting -= ProgramExitCallback;
     }
 
+    internal async Task Execute(CancellationToken token)
+    {
+        Task mainTask = Task.Run(OnSelect, token);
+        Task waitTask = token.WaitAsync();
+
+        try {
+            await Task.WhenAll(mainTask, waitTask);
+        }
+        catch(OperationCanceledException) { }
+    }
+
+    protected abstract void OnSelect();
     protected abstract void Load();
-    protected abstract void OnExit();
+    protected abstract void OnDeselect();
     // These two: to implement
     //protected abstract void Main();
     //protected abstract void OnExit();

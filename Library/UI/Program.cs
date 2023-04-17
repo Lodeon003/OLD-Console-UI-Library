@@ -35,7 +35,7 @@ public abstract class Script
         this.OnInitialize(pages);
 
         Task mainTask = Task.Run(Main, _exitSource.Token);
-        Task exitTask = Task.Run(() => WaitHandle.WaitAny(new[] { _exitSource.Token.WaitHandle }));
+        Task exitTask = _exitSource.Token.WaitAsync();
 
         try {
             await Task.WhenAll(mainTask, exitTask);

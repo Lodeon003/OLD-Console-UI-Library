@@ -48,7 +48,7 @@ internal class LegacyBuffer : GraphicBuffer
         Parent = parent;
     }
 
-    internal delegate void ResizeDelegate(LegacyBuffer sender, short width, short height);
+    internal delegate void ResizeDelegate(LegacyBuffer sender, int width, int height);
     internal event ResizeDelegate? OnResize;
 
     internal delegate void MoveDelegate(LegacyBuffer sender, int x, int y);
@@ -66,7 +66,7 @@ internal class LegacyBuffer : GraphicBuffer
     private List<LegacyBuffer> _overlappingBuffers = new List<LegacyBuffer>();
     //private bool _displayForeground = false;
 
-    public override void Resize(short width, short height)
+    public override void Resize(int width, int height)
     {
         base.Resize(width, height);
         OnResize?.Invoke(this, width, height);

@@ -1,7 +1,9 @@
-﻿using Lodeon.Terminal.UI;
+﻿using Lodeon.Terminal.Graphics;
+using Lodeon.Terminal.UI;
 using Lodeon.Terminal.UI.Units;
 using System.Data;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace Lodeon.Terminal.UI.Layout;
@@ -11,21 +13,23 @@ public abstract class LayoutElement : Element
     public LayoutElement(LayoutElement[] children)
     {
         ArgumentNullException.ThrowIfNull(children);
-        _childrenResults = new LayoutResult[children.Length];
         _children = children;
+        // [!] children should be sorted by Z-index which doesn't exist yet
 
         _outBuffer = new GraphicBuffer();
+        _outCanvas = new GraphicCanvas(_outBuffer);
 
-        PropertyChanged += OnPropertyChanged;
+        PropertyChanged += LayoutPropertyChangedCallback;
     }
 
     private readonly GraphicBuffer _outBuffer;
-    private LayoutResult[] _childrenResults;
+    private readonly GraphicCanvas _outCanvas;
+    private LayoutResult _currentLayout;
     private LayoutElement[] _children;
 
-    public abstract LayoutResult[] GetResultArray();
-    public abstract LayoutResult[] GetParentResultArray();
-    protected abstract void OnResize(GraphicBuffer screenBuffer, Pixel4 screenArea);
+    //public abstract LayoutResult[] GetResultArray();
+    //public abstract LayoutResult[] GetParentResultArray();
+    protected abstract void OnResize(GraphicCanvas screenBuffer, Pixel4 screenArea);
 
     #region Events
     // Delegates
@@ -143,39 +147,6 @@ public abstract class LayoutElement : Element
     }
     #endregion
 
-
-    public ReadOnlySpan<LayoutElement> GetChildren()
-        => _children;
-
-    public LayoutResult Compile()
-    {
-        PixelPoint position = Parent.GetPosition();
-        PixelPoint size = Parent.GetSize();
-
-        LayoutStack rootStack = new LayoutStack(position, size);
-
-        LayoutResult rootLayout = new LayoutResult(new(position.X, position.Y, size.X, size.Y),
-                                                   new(position.X, position.Y, size.X, size.Y),
-                                                   new(position.X, position.Y, size.X, size.Y),
-                                                   null, LayoutPosition.Absolute);
-
-        return this.Compile(rootLayout, rootStack);
-    }
-
-    private LayoutResult Compile(LayoutResult parentLayout, LayoutStack parentStack)
-    {
-        LayoutResult[] childResults = GetResultArray();
-        ReadOnlySpan<LayoutElement> children = GetChildren();
-
-        LayoutResult thisLayout = GetLayout(parentLayout, parentStack, childResults);
-        LayoutStack thisStack = new LayoutStack(parentLayout.ContentArea.TopLeft, parentLayout.ContentArea.RectSize);
-
-        for (int i = 0; i < children.Length; i++)
-            childResults[i] = children[i].Compile(thisLayout, thisStack);
-
-        return thisLayout;
-    }
-
     #region Old Compile
     //public LayoutResult Compile(ILayoutTransform root)
     //{
@@ -191,6 +162,35 @@ public abstract class LayoutElement : Element
     //    LayoutStack rootStack = new LayoutStack(position, size);
     //    return this.Compile(rootLayout, rootStack);
     //}
+
+    //public LayoutResult Compile()
+    //{
+    //    PixelPoint position = Parent.GetPosition();
+    //    PixelPoint size = Parent.GetSize();
+    //
+    //    LayoutStack rootStack = new LayoutStack(position, size);
+    //
+    //    LayoutResult rootLayout = new LayoutResult(new(position.X, position.Y, size.X, size.Y),
+    //                                               new(position.X, position.Y, size.X, size.Y),
+    //                                               new(position.X, position.Y, size.X, size.Y),
+    //                                               null, LayoutPosition.Absolute);
+    //
+    //    return this.Compile(rootLayout, rootStack);
+    //}
+    //
+    //private LayoutResult Compile(LayoutResult parentLayout, LayoutStack parentStack)
+    //{
+    //    LayoutResult[] childResults = GetResultArray();
+    //    ReadOnlySpan<LayoutElement> children = GetChildren();
+    //
+    //    LayoutResult thisLayout = CalculateLayout(parentLayout, parentStack, childResults);
+    //    LayoutStack thisStack = new LayoutStack(parentLayout.ContentArea.TopLeft, parentLayout.ContentArea.RectSize);
+    //
+    //    for (int i = 0; i < children.Length; i++)
+    //        childResults[i] = children[i].Compile(thisLayout, thisStack);
+    //
+    //    return thisLayout;
+    //}
     #endregion
 
     /// <summary>
@@ -199,7 +199,7 @@ public abstract class LayoutElement : Element
     /// <param name="parentLayout"></param>
     /// <param name="childResults"></param>
     /// <returns>A <see cref="LayoutResult"/> object rapresenting the element's occupied space relative to the root parent</returns>
-    private LayoutResult GetLayout(LayoutResult parentLayout, LayoutStack parentStack, IReadOnlyCollection<LayoutResult> childResults)
+    private void CalculateLayout(LayoutResult parentLayout, LayoutStack parentStack)
     {
         // NOTE: child collection is not yet initialized but it is passed for LayoutResult reference
 
@@ -235,35 +235,59 @@ public abstract class LayoutElement : Element
          */
 
 
-        return new LayoutResult(totalArea, actualArea, contentArea, childResults, PositionKind);
+        _currentLayout = new LayoutResult(totalArea, actualArea, contentArea, PositionKind);
     }
 
+    private void LayoutPropertyChangedCallback(LayoutElement @this)
+        => Update();
+
+    private LayoutResult GetLayout()
+        => _currentLayout;
+
+
+    /// <summary>
+    /// To test. Should work
+    /// </summary>
+    private void Update()
+    {
+        PixelPoint parentPos = Parent.GetPosition();
+        PixelPoint parentSize = Parent.GetSize();
+
+        LayoutResult parentLayout;
+        ReadOnlySpan<LayoutElement> elements;
+
+        if(Parent is not LayoutElement parent)
+        {
+            Pixel4 area = new Pixel4(parentPos, parentSize);
+            parentLayout = new LayoutResult(area, area, area, LayoutPosition.Absolute);
+
+            LayoutElement @this = this;
+            elements = MemoryMarshal.CreateSpan(ref @this, 1);
+        }
+        else
+        {
+            parentLayout = parent.GetLayout();
+            elements = parent._children;
+        }
+
+        LayoutStack parentStack = new LayoutStack(parentPos, parentSize);
+        
+        // Calculate this element's layout (and siblings' layout if there are)
+        for (int i = 0; i < elements.Length; i++)
+        {
+            elements[i].CalculateLayout(parentLayout, parentStack);
+            elements[i]._outBuffer.Resize(_currentLayout.ActualArea.RectSize.X, _currentLayout.ActualArea.RectSize.Y);
+            elements[i].OnResize(_outCanvas, _currentLayout.ActualArea);
+        }
+
+        // Update children layout completely
+        for (int i = 0; i < _children.Length; i++)
+            _children[i].Update();
+    }
 
     internal static LayoutElement? TreeFromXml(string path)
     {
         throw new NotImplementedException();
-    }
-
-    private void OnPropertyChanged(LayoutElement sender)
-        => Update();
-
-    private LayoutResult Update()
-    {
-        // Make it so when property updates the LayoutResult gets saved on the object itself
-        // Have an event to children's PropertyChanged event and make it so that when a child's property change,
-        // This' layout recalculates, recaculating all of the children 
-
-        if(Parent is not LayoutElement parent)
-        {
-            Pixel4 area = new Pixel4(Parent.GetPosition(), Parent.GetSize());
-            return new LayoutResult(area, area, area, null, LayoutPosition.Absolute);
-        }
-
-        LayoutResult parentLayout = parent.Update();
-        LayoutResult thisLayout = GetLayout(parentLayout, default, null);
-
-        OnResize(_outBuffer, thisLayout.ActualArea);
-        return thisLayout;
     }
 
     //private penis penis penis penis penis penis penis penis penis vagina porn fuck fuck homosexual sex balls and cock cum cum cum mhhhhhhhhhhhh

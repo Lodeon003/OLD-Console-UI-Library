@@ -11,14 +11,16 @@ public class PageInitializer
     private readonly Driver _driver;
     private Page? _mainPage;
     private GraphicBuffer _screenBuffer;
+    private Script _program;
 
     public Page Main => _mainPage ?? throw new ArgumentException($"No page was initialized as main. ONe must be initialized using {nameof(AddMain)} method");
 
-    public PageInitializer(Dictionary<string, Page> dictionary, Driver driver, GraphicBuffer screenBuffer)
+    public PageInitializer(Dictionary<string, Page> dictionary, Driver driver, GraphicBuffer screenBuffer, Script program)
     {
         _dictionary = dictionary;
         _driver = driver;
         _screenBuffer = screenBuffer;
+        _program = program; 
     }
 
     public void AddMain<TPage>(string name) where TPage : Page, new()
@@ -36,7 +38,7 @@ public class PageInitializer
         else
             throw new ArgumentException("More than one page was set as Main page", nameof(isMain));
 
-        page.Initialize(_driver, isMain, _screenBuffer);
+        page.Initialize(_program, _driver, isMain, _screenBuffer);
 
         if (!_dictionary.TryAdd(name, page))
             throw new ArgumentException($"More than one page have the same name: \"{name}\"", nameof(name));

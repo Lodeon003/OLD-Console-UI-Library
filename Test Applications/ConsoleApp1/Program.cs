@@ -5,7 +5,7 @@ using Lodeon.Terminal.UI.Layout;
 
 -HIGH PRIORITY-
 
-    [_] <Hide output driver from Element objects>, add support for display functions that take in element's graphic buffer and merge it
+    [_] Hide output driver from Element objects, add support for display functions that take in element's graphic buffer and merge it
         . with all parent and child buffers
 
     [#] Impelent page changing program and make it so it can be called by elements and pages. Add other methods

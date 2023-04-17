@@ -4,6 +4,9 @@ namespace Lodeon.Terminal.UI;
 
 public abstract class Page
 {
+    protected Script Program { get { if (_program is null) throw new ArgumentNullException(nameof(Out), "Element was not initialized"); return _program; } }
+    private Script? _program;
+
     protected Driver Out { get { if (_driver is null) throw new ArgumentNullException(nameof(Out), "Element was not initialized"); return _driver; } }
     private Driver? _driver;
 
@@ -16,16 +19,14 @@ public abstract class Page
     /// with parameters
     /// </summary>
     /// <param name="isMain"></param>
-    internal void Initialize(Driver driver, bool isMain, GraphicBuffer programBuffer)
+    internal void Initialize(Script program, Driver driver, bool isMain, GraphicBuffer programBuffer)
     {
         _driver = driver;
         IsMain = isMain;
         _programBuffer = programBuffer;
-    }
+        _program = program;
 
-    internal void Exit()
-    {
-        OnExit();
+        _program.OnExiting += ProgramExitCallback;
     }
 
     internal void Display(Element element)
@@ -38,7 +39,7 @@ public abstract class Page
 
     private void OverlayChildren(Element element)
     {
-        Span<Element> children = element.GetChildren();
+        ReadOnlySpan<Element> children = element.GetChildren();
 
         for(int i = 0; i < children.Length; i++)
         {
@@ -53,6 +54,12 @@ public abstract class Page
             OverlayParent(element);
 
         ProgramBuffer.Overlay(element.GetGraphics(), element.GetScreenArea());
+    }
+
+    private void ProgramExitCallback()
+    {
+        OnExit();
+        Program.OnExiting -= ProgramExitCallback;
     }
 
     protected abstract void Load();

@@ -59,7 +59,7 @@ public abstract class Element : ITransform, IRenderable
 
     public abstract PixelPoint GetSize();
 
-    internal Span<Element> GetChildren()
+    internal ReadOnlySpan<Element> GetChildren()
     {
         throw new NotImplementedException();
     }

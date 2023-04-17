@@ -14,8 +14,8 @@ public class GraphicBuffer : IRenderable
     private static Pixel[] EmptyBuffer { get; } = new Pixel[] { Pixel.Invisible };
     
     // PUBLIC Properties
-    public short Width { get; private set; }
-    public short Height { get; private set; }
+    public int Width { get; private set; }
+    public int Height { get; private set; }
     public Point Position { get; private set; }
     public int Length => Width * Height;
     // PUBLIC Indexers
@@ -103,7 +103,7 @@ public class GraphicBuffer : IRenderable
     /// </summary>
     /// <param name="width"></param>
     /// <param name="height"></param>
-    public virtual void Resize(short width, short height)
+    public virtual void Resize(int width, int height)
     {
         Pixel[] newBuffer = new Pixel[width * height];
         _buffer = newBuffer;
@@ -118,7 +118,7 @@ public class GraphicBuffer : IRenderable
     /// [!]Should implement data copying<br/>
     /// [!] to check
     /// </summary>
-    public virtual void EnsureSize(short width, short height, bool copy)
+    public virtual void EnsureSize(int width, int height, bool copy)
     {
         if (Width >= width && Height >= height)
             return;

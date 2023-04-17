@@ -1,4 +1,6 @@
 ﻿using Lodeon.Terminal.UI.Layout;
+using System.Runtime.CompilerServices;
+
 namespace Lodeon.Terminal.UI;
 
 /// <summary>
@@ -6,25 +8,14 @@ namespace Lodeon.Terminal.UI;
 /// </summary>
 public abstract class Script
 {
-    public static async Task Run<T>(Driver customDriver) where T : Script, new()
-    {
-        T program = new T();
-        program.Initialize(customDriver);
-        await program.Execute();
-    }
-    public static async Task Run<T>() where T : Script, new()
-    {
-        T program = new T();
-        program.Initialize(Driver.GetDefaultDriver());
-        await program.Execute();
-    }
+    public delegate void EmptyDel();
+    public event EmptyDel? OnExiting;
 
-
-    private Driver? _output;
-    private Dictionary<string, Page>? _pages;
     private CancellationTokenSource? _exitSource;
-    private Page? _currentPage;
+    private Dictionary<string, Page>? _pages;
     private GraphicBuffer? _outputBuffer;
+    private Page? _currentPage;
+    private Driver? _output;
 
     private void Initialize(Driver driver)
     {
@@ -40,7 +31,7 @@ public abstract class Script
         _exitSource = new CancellationTokenSource();
         _outputBuffer = new GraphicBuffer();
 
-        PageInitializer pages = new PageInitializer(_pages, _output, _outputBuffer);
+        PageInitializer pages = new PageInitializer(_pages, _output, _outputBuffer, this);
         this.OnInitialize(pages);
 
         Task mainTask = Task.Run(Main, _exitSource.Token);
@@ -66,16 +57,29 @@ public abstract class Script
         _exitSource.Dispose();
         _exitSource = null;
 
-        _currentPage.Exit();
         _currentPage = null;
         _pages = null;
 
+        OnExiting?.Invoke();
         OnExit();
     }
 
     protected virtual void OnExit() { }
     protected virtual void Main() { }
     protected abstract void OnInitialize(PageInitializer pages);
+
+    public static async Task Run<T>(Driver customDriver) where T : Script, new()
+    {
+        T program = new T();
+        program.Initialize(customDriver);
+        await program.Execute();
+    }
+    public static async Task Run<T>() where T : Script, new()
+    {
+        T program = new T();
+        program.Initialize(Driver.GetDefaultDriver());
+        await program.Execute();
+    }
 }
 
 /*

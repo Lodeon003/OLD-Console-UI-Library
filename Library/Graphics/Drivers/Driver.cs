@@ -12,8 +12,18 @@ using Lodeon.Terminal.Graphics.Drivers;
 /// </summary>
 public abstract class Driver : IDisposable
 {
-    private static object _lock = new object();
+    public delegate void WindowResizedDel(Rectangle lastSize, Rectangle newSize);
+    public abstract event WindowResizedDel? WindowResized;
 
+    public delegate void ConsoleInputDel(ConsoleKeyInfo keyInfo);
+    public abstract event ConsoleInputDel? KeyboardInputDown;
+    public abstract event ConsoleInputDel? KeyboardInputUp;
+
+    public delegate void MouseInputDel(int button, Point position);
+    public abstract event MouseInputDel? MouseInputDown;
+    public abstract event MouseInputDel? MouseInputUp;
+
+    private static object _lock = new object();
     public abstract int ScreenWidth { get; }
     public abstract int ScreenHeight { get; }
     protected bool Disposed { get; private set; } = false;

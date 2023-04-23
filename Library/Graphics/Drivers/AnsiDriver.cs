@@ -19,6 +19,14 @@ public class AnsiDriver : Driver
     private Color _foreground;
     private Color _background;
 
+    private CancellationTokenSource _disposeToken = new CancellationTokenSource();
+
+    public override event WindowResizedDel? WindowResized;
+    public override event ConsoleInputDel? KeyboardInputDown;
+    public override event ConsoleInputDel? KeyboardInputUp;
+    public override event MouseInputDel? MouseInputDown;
+    public override event MouseInputDel? MouseInputUp;
+
     public short MaxBufferWidth { get; } = 1_000;
     public short MaxBufferHeight { get; } = 1_000;
     public Color Foreground
@@ -69,6 +77,8 @@ public class AnsiDriver : Driver
     {
         ColorSimilarityThreshold = colorSimilarityThreshold;
         Setup();
+
+        Task.Run(Input);
     }
 
     private void Setup()
@@ -81,6 +91,31 @@ public class AnsiDriver : Driver
 
             if (!enabled)
                 throw new InvalidOperationException("Couldn't enable terminal graphics on this windows version");
+        }
+    }
+
+
+    private async Task Input()
+    {
+        try
+        {
+            await Task.Run(InputLoop).WaitAsync(_disposeToken.Token);
+        }
+        catch(OperationCanceledException)
+        { }
+    }
+
+    private void InputLoop()
+    {
+        while(true)
+        {
+            ConsoleKeyInfo keyInfo = Console.ReadKey();
+            
+            Task.Run(() =>
+            {
+                KeyboardInputDown?.Invoke(keyInfo);
+                KeyboardInputUp?.Invoke(keyInfo);
+            });
         }
     }
 

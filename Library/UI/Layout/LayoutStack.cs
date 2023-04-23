@@ -2,7 +2,7 @@
 
 namespace Lodeon.Terminal.UI.Layout;
 
-internal struct LayoutStack
+internal ref struct LayoutStack
 {
     private PixelPoint _size;
     private PixelPoint _position;

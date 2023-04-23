@@ -1,8 +1,14 @@
 {
   "version": 2,
+<<<<<<< HEAD
   "dgSpecHash": "j3FnU0C2Xf+/1KCMETjNBViB4ZFUY6DJboDYy3Su2p/3CNAPWBhhIl2v0xqS4bihUP4e1qfgTKJZ1zWqGBmhJQ==",
   "success": true,
   "projectFilePath": "C:\\Users\\minec\\Source\\Repos\\Lodeon003\\Console-UI-Library\\Test Applications\\ConsoleApp1\\Test Application.csproj",
+=======
+  "dgSpecHash": "Nfg3jEMXB5YV4UNL14CS3iHUnpzYDSmUqdRkOPBV06iThUVlQav6sOCQrhmv4rKiJauWFUS2zlgn6+YTNXRiOw==",
+  "success": true,
+  "projectFilePath": "E:\\Documenti\\C# Programs\\ANSI GUI Library\\1.4\\Test Applications\\ConsoleApp1\\Test Application.csproj",
+>>>>>>> 59c57b864587d8b51040c1f79e101b4265c28a41
   "expectedPackageFiles": [],
   "logs": []
 }

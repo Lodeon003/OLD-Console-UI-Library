@@ -1,10 +1,22 @@
-﻿using System.Security.Cryptography;
+﻿using Lodeon.Terminal.UI.Units;
+using System.Security.Cryptography;
 
 namespace Lodeon.Terminal.UI;
 
-public abstract class Page
+public abstract class Page : ITransform
 {
     protected Script Program { get { if (_program is null) throw new ArgumentNullException(nameof(Out), "Element was not initialized"); return _program; } }
+
+    public PixelPoint GetPosition()
+    {
+        throw new NotImplementedException();
+    }
+
+    public PixelPoint GetSize()
+    {
+        throw new NotImplementedException();
+    }
+
     private Script? _program;
 
     protected Driver Out { get { if (_driver is null) throw new ArgumentNullException(nameof(Out), "Element was not initialized"); return _driver; } }
@@ -12,6 +24,9 @@ public abstract class Page
 
     protected GraphicBuffer ProgramBuffer { get { if (_programBuffer is null) throw new ArgumentNullException(nameof(ProgramBuffer), "Element was not initialized"); return _programBuffer; } }
     private GraphicBuffer? _programBuffer;
+
+    public event TransformChangedEvent PositionChanged;
+    public event TransformChangedEvent SizeChanged;
 
     public bool IsMain { get; private set; }
 
@@ -77,6 +92,8 @@ public abstract class Page
     protected abstract void OnSelect();
     protected abstract void Load();
     protected abstract void OnDeselect();
+
+
     // These two: to implement
     //protected abstract void Main();
     //protected abstract void OnExit();

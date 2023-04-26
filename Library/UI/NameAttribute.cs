@@ -1,4 +1,4 @@
-public class NameAttribute
+public class NameAttribute : Attribute
 {
     public string Name {get; private init;}
 

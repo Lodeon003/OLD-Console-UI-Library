@@ -1,4 +1,6 @@
-﻿namespace Lodeon.Terminal.UI.Units;
+﻿using System.Drawing;
+
+namespace Lodeon.Terminal.UI.Units;
 
 public readonly struct Pixel4
 {
@@ -99,4 +101,7 @@ public readonly struct Pixel4
             _ => throw new NotImplementedException()
         };
     }
+
+    internal Rectangle AsRectangle()
+        => new Rectangle(Left, Top, Left+Right, Top+Bottom);
 }

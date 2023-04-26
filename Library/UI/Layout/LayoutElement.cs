@@ -4,6 +4,7 @@ using Lodeon.Terminal.UI.Units;
 using System.Data;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Xml;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace Lodeon.Terminal.UI.Layout;
@@ -29,7 +30,7 @@ public abstract class LayoutElement : Element
 
     //public abstract LayoutResult[] GetResultArray();
     //public abstract LayoutResult[] GetParentResultArray();
-    protected abstract void OnResize(GraphicCanvas screenBuffer, Pixel4 screenArea);
+    protected abstract void OnResize(GraphicCanvas screenBuffer, Rectangle screenArea);
 
     #region Events
     // Delegates
@@ -244,20 +245,25 @@ public abstract class LayoutElement : Element
     private LayoutResult GetLayout()
         => _currentLayout;
 
+    public sealed override PixelPoint GetPosition()
+        => _currentLayout.Position;
+
+    public sealed override PixelPoint GetSize()
+        => _currentLayout.ContentArea.RectSize;
 
     /// <summary>
     /// To test. Should work
     /// </summary>
     private void Update()
     {
-        PixelPoint parentPos = Parent.GetPosition();
-        PixelPoint parentSize = Parent.GetSize();
-
         LayoutResult parentLayout;
         ReadOnlySpan<LayoutElement> elements;
 
         if(Parent is not LayoutElement parent)
         {
+        PixelPoint parentPos = Parent.GetPosition();
+        PixelPoint parentSize = Parent.GetSize();
+
             Pixel4 area = new Pixel4(parentPos, parentSize);
             parentLayout = new LayoutResult(area, area, area, LayoutPosition.Absolute);
 
@@ -270,24 +276,20 @@ public abstract class LayoutElement : Element
             elements = parent._children;
         }
 
-        LayoutStack parentStack = new LayoutStack(parentPos, parentSize);
+        LayoutStack parentStack = new LayoutStack(parentLayout.Position, parentLayout.ContentArea.RectSize);
         
         // Calculate this element's layout (and siblings' layout if there are)
         for (int i = 0; i < elements.Length; i++)
         {
             elements[i].CalculateLayout(parentLayout, parentStack);
             elements[i]._outBuffer.Resize(_currentLayout.ActualArea.RectSize.X, _currentLayout.ActualArea.RectSize.Y);
-            elements[i].OnResize(_outCanvas, _currentLayout.ActualArea);
+            elements[i].OnResize(_outCanvas, _currentLayout.ActualArea.AsRectangle());
         }
 
         // Update children layout completely
+        // [!] Surely wrong, when a children gets updated it updates other children as well, causing them to be recalculated lot of times each
         for (int i = 0; i < _children.Length; i++)
             _children[i].Update();
-    }
-
-    internal static LayoutElement? TreeFromXml(string path)
-    {
-        throw new NotImplementedException();
     }
 
     //private penis penis penis penis penis penis penis penis penis vagina porn fuck fuck homosexual sex balls and cock cum cum cum mhhhhhhhhhhhh

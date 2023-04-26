@@ -11,6 +11,9 @@ using Lodeon.Terminal.UI.Layout;
     [_] Impelent page changing program and make it so it can be called by elements and pages. Add other methods
         . Make abstract Main() and OnExit() methods on Page that will be called by the program when page changes
 
+    [#] Fix layout element Update method as having all children update in the "Update method" of one of them is bad idea.
+        If all children get updated, every children updates every children
+
     [#] LayoutElement TreeFromXML with attribute for naming
 
     [#] Implement event on Driver class that fires whenever output window's size changes. Not sure on how to force it

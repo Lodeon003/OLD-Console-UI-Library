@@ -14,7 +14,7 @@ using Lodeon.Terminal.UI.Layout;
     [#] Fix layout element Update method as having all children update in the "Update method" of one of them is bad idea.
         If all children get updated, every children updates every children
 
-    [#] LayoutElement TreeFromXML with attribute for naming
+    [=] LayoutElement TreeFromXML with attribute for naming
 
     [#] Implement event on Driver class that fires whenever output window's size changes. Not sure on how to force it
 

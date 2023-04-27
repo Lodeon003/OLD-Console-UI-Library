@@ -11,7 +11,11 @@ namespace Lodeon.Terminal.UI.Layout;
 
 public abstract class LayoutElement : Element
 {
-    public LayoutElement(LayoutElement[] children)
+    public LayoutElement()
+    {
+    }
+
+    internal void InitializeExt(LayoutElement[] children)
     {
         ArgumentNullException.ThrowIfNull(children);
         _children = children;
@@ -27,7 +31,6 @@ public abstract class LayoutElement : Element
     private readonly GraphicCanvas _outCanvas;
     private LayoutResult _currentLayout;
     private LayoutElement[] _children;
-
     //public abstract LayoutResult[] GetResultArray();
     //public abstract LayoutResult[] GetParentResultArray();
     protected abstract void OnResize(GraphicCanvas screenBuffer, Rectangle screenArea);
@@ -252,7 +255,7 @@ public abstract class LayoutElement : Element
         => _currentLayout.ContentArea.RectSize;
 
     /// <summary>
-    /// To test. Should work
+    /// To test. works but wrong (read inside)
     /// </summary>
     private void Update()
     {
@@ -290,6 +293,55 @@ public abstract class LayoutElement : Element
         // [!] Surely wrong, when a children gets updated it updates other children as well, causing them to be recalculated lot of times each
         for (int i = 0; i < _children.Length; i++)
             _children[i].Update();
+    }
+
+    internal static RootElement? TreeFromXml(string path, ElementParams parameters)
+    {
+        XmlDocument document = new XmlDocument();
+        document.Load(path);
+
+        RootElement root = new RootElement();
+        root.Initialize(parameters);
+
+        parameters.Parent = root;
+
+        LayoutElement[] elements = document.ChildNodes.Count == 0 ? Enumerable.Empty<LayoutElement>() : new LayoutElement[document.ChildNodes.Count];
+
+        for (int i = 0; i < document.ChildNodes.Count; i++)
+            elements[i] = FromNode(document.ChildNodes.Item(i), parameters);
+
+        root.SetChildren(elements);
+        return root;
+    }
+
+    private static LayoutElement FromNode(XmlNode node, ElementParams parameters)
+    {
+        LayoutElement element = ElementCache.Instance.Instantiate(node.Name);
+        element.Initialize(parameters);
+
+        parameters.Parent = element;
+        
+        LayoutElement[] children = document.ChildNodes.Count == 0 ? Enumerable.Empty<LayoutElement>() : new LayoutElement[node.ChildNodes.Count];
+
+        for (int i = 0; i < node.ChildNodes.Count; i++)
+            children[i] = FromNode(node.ChildNodes.Item(i), parameters);
+
+
+        // Get all properties in element type
+        foreach (PropertyInfo prop in element.GetType().GetProperties().Where((x) => x.GetSetMethod(true) != null && x.GetGetMethod(true) != null))
+        {
+            XmlAttribute? attribute = node.Attributes?[prop.Name];
+
+            // If property has been specified in XML
+            if (attribute == null)
+                continue;
+
+            // [!] Convert value to real type instead of string before converting
+            prop.SetValue(element, attribute.Value);
+        }
+
+        element.SetChildren(children);
+        return element;
     }
 
     //private penis penis penis penis penis penis penis penis penis vagina porn fuck fuck homosexual sex balls and cock cum cum cum mhhhhhhhhhhhh

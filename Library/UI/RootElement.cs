@@ -2,8 +2,10 @@
 
 namespace Lodeon.Terminal.UI
 {
-    internal class RootElement : Element
+    internal sealed class RootElement : Element
     {
+        private Element[] _children;
+
         public RootElement() {}
 
         public override PixelPoint GetPosition()
@@ -11,5 +13,11 @@ namespace Lodeon.Terminal.UI
 
         public override PixelPoint GetSize()
             => Page.GetSize();
+
+        public void SetChildren(Element[] elements)
+            => _children = elements;
+
+        public override ReadOnlySpan<Element> GetChildren()
+            => _children;
     }
 }

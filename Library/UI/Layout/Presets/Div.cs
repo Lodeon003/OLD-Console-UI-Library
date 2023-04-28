@@ -9,15 +9,27 @@ using System.Threading.Tasks;
 
 namespace Lodeon.Terminal.UI.Layout.Presets
 {
+    [Name("Square")]
     public class Square : LayoutElement
     {
-        public Square(LayoutElement[] children) : base(children)
+        public Color Background { get; set; }
+
+        public override ReadOnlySpan<Pixel> GetGraphics()
         {
+            throw new NotImplementedException();
         }
 
-        public Color Background { get; set; }
+        public override Rectangle GetScreenArea()
+        {
+            throw new NotImplementedException();
+        }
 
         protected override void OnResize(GraphicCanvas screenBuffer, Rectangle screenArea)
         => screenBuffer.DrawRectangle(screenArea, Background);
+
+        internal override ReadOnlySpan<Element> GetChildren()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

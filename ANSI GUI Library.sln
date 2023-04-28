@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ANSI GUI Library", "Library
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test Application", "Test Applications\ConsoleApp1\Test Application.csproj", "{A10B20E3-3ECC-435A-B2B5-10F0A182194F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarks", "Test Applications\Benchmarks\Benchmarks.csproj", "{94012761-9543-4916-B435-778C97059379}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{A10B20E3-3ECC-435A-B2B5-10F0A182194F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A10B20E3-3ECC-435A-B2B5-10F0A182194F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A10B20E3-3ECC-435A-B2B5-10F0A182194F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94012761-9543-4916-B435-778C97059379}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94012761-9543-4916-B435-778C97059379}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94012761-9543-4916-B435-778C97059379}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94012761-9543-4916-B435-778C97059379}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

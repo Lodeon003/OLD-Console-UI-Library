@@ -31,6 +31,12 @@ public class WindowsDriver : Driver
 
     public override int ScreenHeight => throw new NotImplementedException();
 
+    public override event WindowResizedDel? WindowResized;
+    public override event ConsoleInputDel? KeyboardInputDown;
+    public override event ConsoleInputDel? KeyboardInputUp;
+    public override event MouseInputDel? MouseInputDown;
+    public override event MouseInputDel? MouseInputUp;
+
     public override void Clear()
     {
         throw new NotImplementedException();

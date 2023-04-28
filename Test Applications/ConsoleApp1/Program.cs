@@ -44,7 +44,11 @@ using Lodeon.Terminal.UI.Layout;
     [-] Add functions to draw shapes on grahpic buffers using source coordinates and/or precentages. <Maybe use wrapper to prevent
         . buffer size and position change>
  */
-await Script.Run<MyProgram>();
+
+
+RootElement root = LayoutElement.TreeFromXml("Square.xml", null);
+return;
+//await Script.Run<MyProgram>();
 
 class MyProgram : Script
 {

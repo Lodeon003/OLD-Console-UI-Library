@@ -76,15 +76,5 @@ namespace Lodeon.Terminal.UI.Legacy.BasicElements
             UpdateContent();
             Display(_buffer);
         }
-
-        public override PixelPoint GetPosition()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override PixelPoint GetSize()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Lodeon.Terminal.Graphics.Drivers;
+using System;
 using System.Drawing;
 
 namespace Lodeon.Terminal.UI;
@@ -145,5 +146,26 @@ public abstract class LegacyElement : Element
             OnEnable();
         else
             OnDisable();
+    }
+
+    internal override ReadOnlySpan<Element> GetChildren()
+        => null;
+
+    public override ReadOnlySpan<Pixel> GetGraphics()
+        => null;
+
+    public override Units.PixelPoint GetPosition()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override Rectangle GetScreenArea()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override Units.PixelPoint GetSize()
+    {
+        throw new NotImplementedException();
     }
 }

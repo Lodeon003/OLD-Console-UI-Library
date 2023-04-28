@@ -6,7 +6,7 @@ namespace Lodeon.Terminal.UI.Layout;
 public abstract class LayoutPage : Page, ITransform
 {
     private const string UIResourceAttributeName = "Layout";
-    private LayoutElement? _root;
+    private RootElement? _root;
 
     public event TransformChangedEvent? PositionChanged;
     public event TransformChangedEvent? SizeChanged;
@@ -27,7 +27,7 @@ public abstract class LayoutPage : Page, ITransform
         string path = layoutAttribue is not null ? $"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}/{layoutAttribue.Path}"
                                                 : $"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}/{GetType().Name}.xml";
         // Import/copy classes form other library
-        LayoutElement? root = LayoutElement.TreeFromXml(path);
+        RootElement? root = LayoutElement.TreeFromXml(path, this);
 
         if (root is null)
             throw new Exception($"Runtime Error: Couldn't load missing layout file in position: {path}");

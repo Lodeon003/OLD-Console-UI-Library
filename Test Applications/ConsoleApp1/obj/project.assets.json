@@ -86,13 +86,5 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.301\\RuntimeIdentifierGraph.json"
       }
     }
-  },
-  "logs": [
-    {
-      "code": "Undefined",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "Si è verificato un problema durante la lettura del file di cache C:\\Users\\minec\\Source\\Repos\\Lodeon003\\Console-UI-Library\\Test Applications\\ConsoleApp1\\obj\\project.nuget.cache: Invalid property identifier character: <. Path 'version', line 3, position 0."
-    }
-  ]
+  }
 }

@@ -17,7 +17,6 @@ namespace Lodeon.Terminal.UI;
 /// </summary>
 public abstract class Element : ITransform, IRenderable
 {
-    protected GraphicBuffer Buffer { get { if (_buffer == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _buffer; } }
     protected GraphicCanvas Canvas { get { if (_canvas == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _canvas; } }
     protected Page Page { get { if (_page == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _page; } }
     protected ReadonlyGraphicBuffer CanvasView { get { if (_canvasView == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _canvasView; } }
@@ -26,7 +25,7 @@ public abstract class Element : ITransform, IRenderable
 
     private ReadonlyGraphicBuffer? _canvasView;
     private GraphicCanvas? _canvas;
-    private GraphicBuffer? _buffer;
+    
     private Page? _page;
     private ITransform? _parent;
 
@@ -35,16 +34,12 @@ public abstract class Element : ITransform, IRenderable
     public event TransformChangedEvent? PositionChanged;
     public event TransformChangedEvent? SizeChanged;
 
-    public void Initialize(ElementParams parameters)
+    public virtual void Initialize(Page page, ITransform parent)
     {
-        _buffer = parameters.Buffer;
-        ArgumentNullException.ThrowIfNull(_buffer);
-        _canvas = new GraphicCanvas(_buffer);
-
-        _page = parameters.Page;
+        _page = page;
         ArgumentNullException.ThrowIfNull(_page);
 
-        _parent = parameters.Parent;
+        _parent = parent;
         ArgumentNullException.ThrowIfNull(_parent);
 
         _canvasView = _canvas.AsReadonly();
@@ -53,11 +48,9 @@ public abstract class Element : ITransform, IRenderable
     protected void Display()
         => Page.Display(this);
 
-    public ReadOnlySpan<Pixel> GetGraphics()
-        => Buffer.GetGraphics();
+    public abstract ReadOnlySpan<Pixel> GetGraphics();
 
-    public Rectangle GetScreenArea()
-        => Buffer.GetScreenArea();
+    public abstract Rectangle GetScreenArea();
 
     public abstract PixelPoint GetPosition();
 

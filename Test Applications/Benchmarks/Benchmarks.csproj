@@ -3,17 +3,12 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>Test_Application</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="bin\Debug\net6.0\Square.xml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\Library\ANSI GUI Library.csproj" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
   </ItemGroup>
 
 </Project>

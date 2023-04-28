@@ -3,6 +3,7 @@ using Lodeon.Terminal.UI;
 using Lodeon.Terminal.UI.Units;
 using System.Data;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Xml;
 using Rectangle = System.Drawing.Rectangle;
@@ -15,20 +16,28 @@ public abstract class LayoutElement : Element
     {
     }
 
-    internal void InitializeExt(LayoutElement[] children)
-    {
-        ArgumentNullException.ThrowIfNull(children);
-        _children = children;
-        // [!] children should be sorted by Z-index which doesn't exist yet
+    internal override ReadOnlySpan<Element> GetChildren()
+        => _children;
 
-        _outBuffer = new GraphicBuffer();
-        _outCanvas = new GraphicCanvas(_outBuffer);
+    public override ReadOnlySpan<Pixel> GetGraphics()
+        => _buffer.GetGraphics();
+
+    public override Rectangle GetScreenArea()
+        => _buffer.GetScreenArea();
+
+    public override void Initialize(Page page, ITransform parent)
+    {
+        base.Initialize(page, parent);
+
+        _buffer = new GraphicBuffer();
+        _outCanvas = new GraphicCanvas(_buffer);
 
         PropertyChanged += LayoutPropertyChangedCallback;
     }
 
-    private readonly GraphicBuffer _outBuffer;
-    private readonly GraphicCanvas _outCanvas;
+    //protected GraphicBuffer Buffer { get { if (_buffer == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _buffer; } }
+    private GraphicBuffer? _buffer;
+    private GraphicCanvas _outCanvas;
     private LayoutResult _currentLayout;
     private LayoutElement[] _children;
     //public abstract LayoutResult[] GetResultArray();
@@ -245,9 +254,6 @@ public abstract class LayoutElement : Element
     private void LayoutPropertyChangedCallback(LayoutElement @this)
         => Update();
 
-    private LayoutResult GetLayout()
-        => _currentLayout;
-
     public sealed override PixelPoint GetPosition()
         => _currentLayout.Position;
 
@@ -275,7 +281,7 @@ public abstract class LayoutElement : Element
         }
         else
         {
-            parentLayout = parent.GetLayout();
+            parentLayout = parent._currentLayout;
             elements = parent._children;
         }
 
@@ -285,7 +291,7 @@ public abstract class LayoutElement : Element
         for (int i = 0; i < elements.Length; i++)
         {
             elements[i].CalculateLayout(parentLayout, parentStack);
-            elements[i]._outBuffer.Resize(_currentLayout.ActualArea.RectSize.X, _currentLayout.ActualArea.RectSize.Y);
+            elements[i]._buffer.Resize(_currentLayout.ActualArea.RectSize.X, _currentLayout.ActualArea.RectSize.Y);
             elements[i].OnResize(_outCanvas, _currentLayout.ActualArea.AsRectangle());
         }
 
@@ -295,51 +301,51 @@ public abstract class LayoutElement : Element
             _children[i].Update();
     }
 
-    internal static RootElement? TreeFromXml(string path, ElementParams parameters)
+    internal void SetChildren(LayoutElement[] children)
+    {
+        _children = children;
+    }
+
+    public static RootElement? TreeFromXml(string path, Page page)
     {
         XmlDocument document = new XmlDocument();
         document.Load(path);
 
         RootElement root = new RootElement();
-        root.Initialize(parameters);
+        root.Initialize(page, page);
 
-        parameters.Parent = root;
-
-        LayoutElement[] elements = document.ChildNodes.Count == 0 ? Enumerable.Empty<LayoutElement>() : new LayoutElement[document.ChildNodes.Count];
+        LayoutElement[] elements = document.ChildNodes.Count == 0 ? Array.Empty<LayoutElement>() : new LayoutElement[document.ChildNodes.Count];
 
         for (int i = 0; i < document.ChildNodes.Count; i++)
-            elements[i] = FromNode(document.ChildNodes.Item(i), parameters);
+            elements[i] = FromNode(document.ChildNodes.Item(i), page, root);
 
         root.SetChildren(elements);
         return root;
     }
-
-    private static LayoutElement FromNode(XmlNode node, ElementParams parameters)
+    private static LayoutElement FromNode(XmlNode node, Page page, ITransform parent)
     {
-        LayoutElement element = ElementCache.Instance.Instantiate(node.Name);
-        element.Initialize(parameters);
-
-        parameters.Parent = element;
+        LayoutElement element = (LayoutElement)ElementCache.Instance.Instantiate(node.Name);
+        element.Initialize(page, parent);
         
-        LayoutElement[] children = document.ChildNodes.Count == 0 ? Enumerable.Empty<LayoutElement>() : new LayoutElement[node.ChildNodes.Count];
+        LayoutElement[] children = node.ChildNodes.Count == 0 ? Array.Empty<LayoutElement>() : new LayoutElement[node.ChildNodes.Count];
 
         for (int i = 0; i < node.ChildNodes.Count; i++)
-            children[i] = FromNode(node.ChildNodes.Item(i), parameters);
+            children[i] = FromNode(node.ChildNodes.Item(i), page, element);
 
 
         // Get all properties in element type
-        foreach (PropertyInfo prop in element.GetType().GetProperties().Where((x) => x.GetSetMethod(true) != null && x.GetGetMethod(true) != null))
-        {
-            XmlAttribute? attribute = node.Attributes?[prop.Name];
-
-            // If property has been specified in XML
-            if (attribute == null)
-                continue;
-
-            // [!] Convert value to real type instead of string before converting
-            prop.SetValue(element, attribute.Value);
-        }
-
+        //foreach (PropertyInfo prop in element.GetType().GetProperties().Where((x) => x.GetSetMethod(true) != null && x.GetGetMethod(true) != null))
+        //{
+        //    XmlAttribute? attribute = node.Attributes?[prop.Name];
+        //
+        //    // If property has been specified in XML
+        //    if (attribute == null)
+        //        continue;
+        //
+        //    // [!] Convert value to real type instead of string before converting
+        //    prop.SetValue(element, attribute.Value);
+        //}
+        //
         element.SetChildren(children);
         return element;
     }

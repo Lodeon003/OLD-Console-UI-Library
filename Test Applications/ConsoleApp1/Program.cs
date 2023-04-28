@@ -11,6 +11,10 @@ using Lodeon.Terminal.UI.Layout;
     [_] Impelent page changing program and make it so it can be called by elements and pages. Add other methods
         . Make abstract Main() and OnExit() methods on Page that will be called by the program when page changes
 
+    [#] Implement system to return array of expeptions from Page's and Element's Initialize functions and have an overridable method - Page OnInitializeException(ExceptionCollection exceptions)
+        . in Program class that prints errors in a custom error page by default. Method must return a custom page to display in case of errors.
+        . The ExceptionCollection must have an internal Add method and public iterator. That collection should be given by the script so not to create many objects. Program could just check after everything is initialized if Exceptions.Count == 0
+
     [#] Fix layout element Update method as having all children update in the "Update method" of one of them is bad idea.
         If all children get updated, every children updates every children
 

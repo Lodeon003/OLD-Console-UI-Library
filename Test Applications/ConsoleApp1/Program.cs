@@ -29,8 +29,10 @@ using Lodeon.Terminal.UI.Layout;
         . Add event for keyboard input in driver class
     
     [#] Implement element focusing and element navigation [<- previous item, -> next item, [_] move to children, [ESC] exit to parent
-        . Add OnFocus and OnLostFocus events for elements.
-    
+        . Add abstract properties 'IsFocusable' and 'IsContainer'. Container items can have children and if focused they will automatically browse children
+        . Wrap in a Browser class to reduce clutter. Create interface IBrowsable<TChildren, TParent> with methods to retrieve family members
+   
+    [#] Add OnFocus and OnLostFocus events for elements. Add method Throw(Exception e, bool stopExecution) and Unfocus() on elements class
     
     [#] Layout stacking algorithm
 

@@ -52,7 +52,22 @@ public abstract class Page : ITransform
         _exceptionHandler = handler;
         _navigator = navigator;
 
+        _script.OnPageChanged += Script_OnPageChanged;
         _script.OnExiting += Script_OnExit;
+    }
+
+    private void Script_OnPageChanged(Page page)
+    {
+        // if page == this
+            // Call events
+            // Update all elements on screen
+            // start loop
+        // else
+            // Call events
+            // Stop loop
+
+        // enable / disable input?
+        throw new NotImplementedException();
     }
 
     internal void Display(Element element)

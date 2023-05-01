@@ -11,7 +11,9 @@ public abstract class Script
 {
     // Events
     public delegate void EmptyDel();
+    public delegate void PageDel(Page page);
     public event EmptyDel? OnExiting;
+    internal event PageDel? OnPageChanged;
 
     // Thread-safe variables
     private Syncronized<bool> _executing = new Syncronized<bool>(false);
@@ -115,6 +117,7 @@ public abstract class Script
     {
         ThrowIfNotExecuting();
         _currentPage.Set(value);
+        OnPageChange?.Invoke(value);
     }
     private void PageNavigator_OnExit()
         => Exit();

@@ -51,7 +51,7 @@ using System.Runtime.InteropServices;
  */
 
 return;
-RootElement root = LayoutElement.TreeFromXml("Square.xml", null);
+RootElement root = LayoutElement.TreeFromXml("Square.xml", null, null, null);
 return;
 //await Script.Run<MyProgram>();
 
@@ -68,7 +68,7 @@ class MyProgram : Script
     }
 }
 
-class MainPage : LayoutPage
+class MainPage : Lodeon.Terminal.UI.Layout.LayoutPage
 {
     protected override void OnSelect()
     {

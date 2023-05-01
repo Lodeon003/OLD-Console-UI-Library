@@ -5,7 +5,6 @@ namespace Lodeon.Terminal.UI;
 
 public abstract class Page : ITransform
 {
-    protected Script Program { get { if (_program is null) throw new ArgumentNullException(nameof(Out), "Element was not initialized"); return _program; } }
 
     public PixelPoint GetPosition()
     {
@@ -17,12 +16,16 @@ public abstract class Page : ITransform
         throw new NotImplementedException();
     }
 
-    private Script? _program;
+    private Script Script { get { if (_script is null) throw new ArgumentNullException(nameof(Out), "Element was not initialized"); return _script; } }
+    private Script? _script;
+
+    protected Navigator<string, Page> Navigator { get { if (_navigator is null) throw new ArgumentNullException(nameof(Navigator), "Element was not initialized"); return _navigator; } }
+    private Navigator<string, Page>? _navigator;
 
     protected ExceptionHandler ExceptionHandler { get { if (_exceptionHandler is null) throw new ArgumentNullException(nameof(ExceptionHandler), "Element was not initialized"); return _exceptionHandler; } }
     private ExceptionHandler? _exceptionHandler;
 
-    protected Driver Out { get { if (_driver is null) throw new ArgumentNullException(nameof(Out), "Element was not initialized"); return _driver; } }
+    private Driver Out { get { if (_driver is null) throw new ArgumentNullException(nameof(Out), "Element was not initialized"); return _driver; } }
     private Driver? _driver;
 
     protected GraphicBuffer ProgramBuffer { get { if (_programBuffer is null) throw new ArgumentNullException(nameof(ProgramBuffer), "Element was not initialized"); return _programBuffer; } }
@@ -40,15 +43,16 @@ public abstract class Page : ITransform
     /// with parameters
     /// </summary>
     /// <param name="isMain"></param>
-    internal void Initialize(Script program, Driver driver, bool isMain, GraphicBuffer programBuffer, ExceptionHandler handler)
+    internal void Initialize(Script program, Driver driver, bool isMain, GraphicBuffer programBuffer, ExceptionHandler handler, Navigator<string, Page> navigator)
     {
         _driver = driver;
         IsMain = isMain;
         _programBuffer = programBuffer;
-        _program = program;
+        _script = program;
         _exceptionHandler = handler;
+        _navigator = navigator;
 
-        _program.OnExiting += ProgramExitCallback;
+        _script.OnExiting += Script_OnExit;
     }
 
     internal void Display(Element element)
@@ -78,10 +82,10 @@ public abstract class Page : ITransform
         ProgramBuffer.Overlay(element.GetGraphics(), element.GetScreenArea());
     }
 
-    private void ProgramExitCallback()
+    private void Script_OnExit()
     {
         OnDeselect();
-        Program.OnExiting -= ProgramExitCallback;
+        Script.OnExiting -= Script_OnExit;
     }
 
     internal async Task Execute(CancellationToken token)
@@ -95,11 +99,17 @@ public abstract class Page : ITransform
         catch(OperationCanceledException) { }
     }
 
+    /// <summary>
+    /// Override to add code before calling events. Call base.OnLoad after your code
+    /// </summary>
+    protected virtual void Load()
+        => OnLoad();
+
+    public abstract void Popup(string title, string text);
     protected abstract void OnSelect();
-    protected abstract void Load();
+    protected virtual void OnLoad() { }
     protected abstract void OnDeselect();
 
-    internal abstract void Popup(string title, string text);
 
     // These two: to implement
     //protected abstract void Main();

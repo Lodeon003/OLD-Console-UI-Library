@@ -9,31 +9,47 @@ namespace Lodeon.Terminal.UI;
 /// </summary>
 public abstract class Script
 {
+    // Events
     public delegate void EmptyDel();
     public event EmptyDel? OnExiting;
 
-    private CancellationTokenSource? _exitSource;
-    private ExceptionHandler? _exceptionHandler;
-    private Dictionary<string, Page>? _pages;
-    private GraphicBuffer? _outputBuffer;
-    private Page? _currentPage;
-    private Page? _mainPage;
-    private Driver? _output;
+    // Thread-safe variables
     private Syncronized<bool> _executing = new Syncronized<bool>(false);
+    private Syncronized<Page?> _currentPage = new Syncronized<Page?>();
+    private CancellationTokenSource? _exitSource;
+    
+    // "Readonly" variables after initialization
+    private ExceptionHandler? _exceptionHandler;
+    private Navigator<string, Page>? _navigator;
+    private GraphicBuffer? _outputBuffer;
+    private Driver? _output;
+
+// --------- PRIVATE METHODS
 
     private void Execute(Driver driver)
     {
         ArgumentNullException.ThrowIfNull(driver);
         _output = driver;
 
-        _pages = new Dictionary<string, Page>();
+        //_pages = new Dictionary<string, Page>();
         _exitSource = new CancellationTokenSource();
         _outputBuffer = new GraphicBuffer();
+        
         _exceptionHandler = new ExceptionHandler();
+        _exceptionHandler.ExceptionThrown += ExceptionHandler_OnThrow;
+        _exceptionHandler.ExceptionLogged += ExceptionHandler_OnLog;
+
 
         // Pages can add exceptions to the handler.
-        PageInitializer pages = new PageInitializer(_pages, _output, _outputBuffer, this, _exceptionHandler);
-        this.OnInitialize(pages);
+        Dictionary<string, Page> pages = new Dictionary<string, Page>();
+        _navigator = new Navigator<string, Page>(pages);
+
+        PageInitializer pageInit = new PageInitializer(pages, _navigator, _output, _outputBuffer, this, _exceptionHandler);
+        this.OnInitialize(pageInit);
+
+        _navigator.OnNavigate += PageNavigator_OnNavigate;
+        _navigator.OnNavigateFail += PageNavigator_OnFail;
+        _navigator.OnExit += PageNavigator_OnExit;
 
         _executing.Set(true);
 
@@ -46,35 +62,8 @@ public abstract class Script
 
         // Code post - execution
         // should run main here.
-        RunPage(_pages.Where((pair) => pair.Value.IsMain).First().Key);
+        _navigator.Navigate((page) => page.IsMain);
     }
-
-    public string GetPageName()
-    {
-        ThrowIfNotExecuting();
-
-        for(int i = int.MinValue; i < int.MaxValue; i++)
-        {
-            if (_pages.ContainsKey($"Page {i}"))
-                continue;
-
-            return $"Page {i}";
-        }
-
-        throw new Exception("Internal error. This program contains pages with all number names. Not teoretically possible");
-    }
-
-    private void HandleExceptionThrow(Exception e)
-    {
-        ThrowIfNotExecuting();
-        _currentPage.Popup("Critical Error", e.Message);
-    }
-    private void HandleExceptionLog(Exception e)
-    {
-        ThrowIfNotExecuting();
-        _currentPage.Popup("Error", e.Message);
-    }
-
     private void ThrowIfNotExecuting()
     {
         _executing.Lock((value) =>
@@ -83,8 +72,6 @@ public abstract class Script
                 throw new InvalidOperationException("Internal error, method was called before program was initialized");
         });
     }
-
-
     private async Task Wait()
     {
         ThrowIfNotExecuting();
@@ -92,18 +79,19 @@ public abstract class Script
         //Task mainTask = Task.Run(Main, _exitSource.Token);
         Task exitTask = _exitSource.Token.WaitAsync();
 
-        try {
+        try
+        {
             await Task.WhenAll(exitTask);
         }
         catch (OperationCanceledException) { }
     }
-
-    protected void Exit()
+    private void Exit()
     {
         if (_exitSource == null)
             return;
 
-        try {
+        try
+        {
             _exitSource.Cancel();
         }
         catch (ObjectDisposedException) { }
@@ -112,44 +100,52 @@ public abstract class Script
         _exitSource.Dispose();
         _exitSource = null;
 
-        _currentPage = null;
-        _pages = null;
-
         OnExiting?.Invoke();
         OnExit();
     }
 
-    public void RunPage(string name)
+//  --------- PAGE NAVIGATOR and EXCEPTION HANDLER --------------------------------------
+
+    private void PageNavigator_OnFail(Navigator.ErrorCode error)
+    {
+        ThrowIfNotExecuting();   
+        _exceptionHandler.Log(new Exception("No page found with specified parameters"));
+    }
+    private void PageNavigator_OnNavigate(Page value)
     {
         ThrowIfNotExecuting();
-
-        if (!_pages.TryGetValue(name, out Page page))
-            throw new Exception("No page present with that name");
-
-        // [!] tell to last page to stop
-        // execute new page and pass cancellation token
-        // set page as current
+        _currentPage.Set(value);
     }
+    private void PageNavigator_OnExit()
+        => Exit();
 
-    public void AddPage(string name, Page page)
+    private void ExceptionHandler_OnThrow(Exception e)
     {
-        if(_pages.ContainsKey(name))
-        {
-            _exceptionHandler.Log(new ArgumentException($"A page was already added to the program with name \'{name}\'"));
-            return;
-        }
+        ThrowIfNotExecuting();
+        _currentPage.Get().Popup("Critical Error", e.Message);
+        Exit();
     }
+    private void ExceptionHandler_OnLog(Exception e)
+    {
+        ThrowIfNotExecuting();
+        _currentPage.Get().Popup("Error", e.Message);
+    }
+
+
+//  --------- OVERRIDABLE METHODS --------------------------------------
 
     protected virtual void OnInitializationFailed(IReadOnlyCollection<Exception> exceptions)
     {
-        string name = GetPageName();
-        AddPage(name, new ErrorPage(exceptions));
-        RunPage(name);
-    }
-   
+        ThrowIfNotExecuting();
+
+        _navigator.Navigate(new ErrorPage(exceptions));
+    }   
+
     protected virtual void OnExit() { }
     protected virtual void Main() { }
     protected abstract void OnInitialize(PageInitializer pages);
+
+//  --------- STATIC METHODS --------------------------------------
 
     public static async Task Run<T>(Driver customDriver) where T : Script, new()
     {

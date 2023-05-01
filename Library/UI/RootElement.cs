@@ -6,9 +6,17 @@ namespace Lodeon.Terminal.UI
 {
     public class RootElement : Element
     {
+        public RootElement() {}
+
         private Element[]? _children;
 
-        public RootElement() {}
+        public override bool IsFocusable => false;
+        public override bool IsContainer => true;
+
+        public override void AddChild(Element element)
+        {
+            throw new NotImplementedException();
+        }
 
         public override ReadOnlySpan<Pixel> GetGraphics()
             => Span<Pixel>.Empty;
@@ -26,6 +34,11 @@ namespace Lodeon.Terminal.UI
 
         public override PixelPoint GetSize()
             => Page.GetSize();
+
+        public override void RemoveChild(Element element)
+        {
+            throw new NotImplementedException();
+        }
 
         internal override ReadOnlySpan<Element> GetChildren()
             => _children;

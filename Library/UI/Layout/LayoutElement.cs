@@ -20,18 +20,18 @@ public abstract class LayoutElement : Element
     protected GraphicCanvas Canvas { get { if (_outCanvas == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _outCanvas; } }
     protected ReadonlyGraphicBuffer CanvasView { get { if (_canvasView == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _canvasView; } }
 
-    internal override ReadOnlySpan<Element> GetChildren()
+    internal sealed override ReadOnlySpan<Element> GetChildren()
         => _children;
 
-    public override ReadOnlySpan<Pixel> GetGraphics()
+    public sealed override ReadOnlySpan<Pixel> GetGraphics()
         => _buffer.GetGraphics();
 
-    public override Rectangle GetScreenArea()
+    public sealed override Rectangle GetScreenArea()
         => _buffer.GetScreenArea();
 
-    public override void Initialize(Page page, ITransform parent)
+    public sealed override void Initialize(Page page, ITransform parent, ExceptionHandler handler, Navigator<string, Page> navigator)
     {
-        base.Initialize(page, parent);
+        base.Initialize(page, parent, handler, navigator);
 
         _buffer = new GraphicBuffer();
         _outCanvas = new GraphicCanvas(_buffer);
@@ -313,7 +313,7 @@ public abstract class LayoutElement : Element
         _children = children;
     }
 
-    public static RootElement? TreeFromXml(string path, Page page, ExceptionHandler handler)
+    public static RootElement? TreeFromXml(string path, Page page, ExceptionHandler handler, Navigator<string, Page> navigator)
     {
         try
         {
@@ -321,12 +321,12 @@ public abstract class LayoutElement : Element
             document.Load(path);
             
             RootElement root = new RootElement();
-            root.Initialize(page, page);
+            root.Initialize(page, page, handler, navigator);
 
             LayoutElement[] elements = document.ChildNodes.Count == 0 ? Array.Empty<LayoutElement>() : new LayoutElement[document.ChildNodes.Count];
 
             for (int i = 0; i < document.ChildNodes.Count; i++)
-                elements[i] = FromNode(document.ChildNodes.Item(i), page, root, handler);
+                elements[i] = FromNode(document.ChildNodes.Item(i), page, root, handler, navigator);
 
             root.SetChildren(elements);
             return root;
@@ -338,15 +338,15 @@ public abstract class LayoutElement : Element
         }
 
     }
-    private static LayoutElement FromNode(XmlNode node, Page page, ITransform parent, ExceptionHandler handler)
+    private static LayoutElement FromNode(XmlNode node, UI.Page page, ITransform parent, ExceptionHandler handler, Navigator<string, Page> navigator)
     {
         LayoutElement element = (LayoutElement)ElementCache.Instance.Instantiate(node.Name);
-        element.Initialize(page, parent);
+        element.Initialize(page, parent, handler, navigator);
         
         LayoutElement[] children = node.ChildNodes.Count == 0 ? Array.Empty<LayoutElement>() : new LayoutElement[node.ChildNodes.Count];
 
         for (int i = 0; i < node.ChildNodes.Count; i++)
-            children[i] = FromNode(node.ChildNodes.Item(i), page, element, handler);
+            children[i] = FromNode(node.ChildNodes.Item(i), page, element, handler, navigator);
 
 
         // Get all properties in element type

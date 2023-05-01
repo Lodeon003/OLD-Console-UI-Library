@@ -7,6 +7,10 @@ namespace Lodeon.Terminal.UI.Legacy.BasicElements
         public Color Background { get; set; } = Color.Invisible;
         public Color Foreground { get; set; } = Color.White;
 
+        public override bool IsFocusable => throw new NotImplementedException();
+
+        public override bool IsContainer => throw new NotImplementedException();
+
         private string _text = string.Empty;
         private LegacyBuffer _buffer;
 
@@ -75,6 +79,16 @@ namespace Lodeon.Terminal.UI.Legacy.BasicElements
             _buffer.Resize(Width, Height);
             UpdateContent();
             Display(_buffer);
+        }
+
+        public override void AddChild(Element element)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void RemoveChild(Element element)
+        {
+            throw new NotImplementedException();
         }
     }
 }

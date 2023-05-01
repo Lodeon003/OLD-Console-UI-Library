@@ -14,22 +14,14 @@ namespace Lodeon.Terminal.UI.Layout.Presets
     {
         public Color Background { get; set; }
 
-        public override ReadOnlySpan<Pixel> GetGraphics()
-        {
-            throw new NotImplementedException();
-        }
+        public override bool IsFocusable => false;
 
-        public override Rectangle GetScreenArea()
-        {
-            throw new NotImplementedException();
-        }
+        public override bool IsContainer => false;
+
+        public override void AddChild(Element element) {}
+        public override void RemoveChild(Element element) {}
 
         protected override void OnResize(GraphicCanvas screenBuffer, Rectangle screenArea)
         => screenBuffer.DrawRectangle(screenArea, Background);
-
-        internal override ReadOnlySpan<Element> GetChildren()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

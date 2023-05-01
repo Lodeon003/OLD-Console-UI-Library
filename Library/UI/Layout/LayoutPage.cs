@@ -1,4 +1,5 @@
-﻿using Lodeon.Terminal.UI.Units;
+﻿using Lodeon.Terminal.UI.Layout.Presets;
+using Lodeon.Terminal.UI.Units;
 using System.Reflection;
 
 namespace Lodeon.Terminal.UI.Layout;
@@ -27,7 +28,7 @@ public abstract class LayoutPage : Page, ITransform
         string path = layoutAttribue is not null ? $"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}/{layoutAttribue.Path}"
                                                 : $"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}/{GetType().Name}.xml";
         // Import/copy classes form other library
-        RootElement? root = LayoutElement.TreeFromXml(path, this);
+        RootElement? root = LayoutElement.TreeFromXml(path, this, ExceptionHandler, Navigator);
 
         if (root is null)
             throw new Exception($"Runtime Error: Couldn't load missing layout file in position: {path}");
@@ -35,6 +36,6 @@ public abstract class LayoutPage : Page, ITransform
         _root = root;
     }
 
-    internal override void Popup(string title, string text)
-        => Root.AddChild(new PopupElement(title, text));
+    public override void Popup(string title, string text)
+        => Root.AddChild(new Popup(title, text));
 }

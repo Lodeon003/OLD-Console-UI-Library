@@ -14,10 +14,15 @@ using System.Runtime.InteropServices;
     [_] Impelent page changing program and make it so it can be called by elements and pages. Add other methods
         . Make abstract Main() and OnExit() methods on Page that will be called by the program when page changes
 
-    [#] Implement system to return array of expeptions from Page's and Element's Initialize functions and have an overridable method - Page OnInitializeException(ExceptionCollection exceptions)
+    [_] Implement system to return array of expeptions from Page's and Element's Initialize functions and have an overridable method - Page OnInitializeException(ExceptionCollection exceptions)
         . in Program class that prints errors in a custom error page by default. Method must return a custom page to display in case of errors.
         . The ExceptionCollection must have an internal Add method and public iterator. That collection should be given by the script so not to create many objects. Program could just check after everything is initialized if Exceptions.Count == 0
 
+    [#] Add OnFocus and OnLostFocus events for elements. Add method Unfocus() on elements class
+    
+    [#] Make sure page and program methods are not exposed. Create navigator class that allows elements and pages to notify program when to change pages.
+        . OnNavigate<TValue>(), Next(), Previous(), Navigate(TKey), Navigate(Value), Values.
+ 
     [#] Fix layout element Update method as having all children update in the "Update method" of one of them is bad idea.
         If all children get updated, every children updates every children
 
@@ -35,8 +40,6 @@ using System.Runtime.InteropServices;
         . Add abstract properties 'IsFocusable' and 'IsContainer'. Container items can have children and if focused they will automatically browse children
         . Wrap in a Browser class to reduce clutter. Create interface IBrowsable<TChildren, TParent> with methods to retrieve family members
    
-    [#] Add OnFocus and OnLostFocus events for elements. Add method Throw(Exception e, bool stopExecution) and Unfocus() on elements class
-    
     [#] Layout stacking algorithm
 
 -LOW PRIORITY-

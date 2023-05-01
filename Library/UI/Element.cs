@@ -17,14 +17,12 @@ namespace Lodeon.Terminal.UI;
 /// </summary>
 public abstract class Element : ITransform, IRenderable
 {
-    protected GraphicCanvas Canvas { get { if (_canvas == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _canvas; } }
     protected Page Page { get { if (_page == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _page; } }
-    protected ReadonlyGraphicBuffer CanvasView { get { if (_canvasView == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _canvasView; } }
     public ITransform Parent { get { if (_parent == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _parent; } }
     //public Element[] Children { get { if (_children == null) throw new Exception("Internal error. Element was used before initializing using \"InitChildren\" function"); return _children; } }
 
-    private ReadonlyGraphicBuffer? _canvasView;
-    private GraphicCanvas? _canvas;
+    public abstract bool IsFocusable { get; }
+    public abstract bool IsContainer { get; }
     
     private Page? _page;
     private ITransform? _parent;
@@ -41,8 +39,6 @@ public abstract class Element : ITransform, IRenderable
 
         _parent = parent;
         ArgumentNullException.ThrowIfNull(_parent);
-
-        _canvasView = _canvas.AsReadonly();
     }
 
     protected void Display()

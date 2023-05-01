@@ -19,6 +19,9 @@ public abstract class Page : ITransform
 
     private Script? _program;
 
+    protected ExceptionHandler ExceptionHandler { get { if (_exceptionHandler is null) throw new ArgumentNullException(nameof(ExceptionHandler), "Element was not initialized"); return _exceptionHandler; } }
+    private ExceptionHandler? _exceptionHandler;
+
     protected Driver Out { get { if (_driver is null) throw new ArgumentNullException(nameof(Out), "Element was not initialized"); return _driver; } }
     private Driver? _driver;
 
@@ -37,12 +40,13 @@ public abstract class Page : ITransform
     /// with parameters
     /// </summary>
     /// <param name="isMain"></param>
-    internal void Initialize(Script program, Driver driver, bool isMain, GraphicBuffer programBuffer)
+    internal void Initialize(Script program, Driver driver, bool isMain, GraphicBuffer programBuffer, ExceptionHandler handler)
     {
         _driver = driver;
         IsMain = isMain;
         _programBuffer = programBuffer;
         _program = program;
+        _exceptionHandler = handler;
 
         _program.OnExiting += ProgramExitCallback;
     }
@@ -95,6 +99,7 @@ public abstract class Page : ITransform
     protected abstract void Load();
     protected abstract void OnDeselect();
 
+    internal abstract void Popup(string title, string text);
 
     // These two: to implement
     //protected abstract void Main();

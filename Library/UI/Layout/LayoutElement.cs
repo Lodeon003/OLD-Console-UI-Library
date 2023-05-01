@@ -3,6 +3,7 @@ using Lodeon.Terminal.UI;
 using Lodeon.Terminal.UI.Units;
 using System.Data;
 using System.Diagnostics;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Xml;
@@ -15,6 +16,9 @@ public abstract class LayoutElement : Element
     public LayoutElement()
     {
     }
+
+    protected GraphicCanvas Canvas { get { if (_outCanvas == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _outCanvas; } }
+    protected ReadonlyGraphicBuffer CanvasView { get { if (_canvasView == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _canvasView; } }
 
     internal override ReadOnlySpan<Element> GetChildren()
         => _children;
@@ -31,6 +35,7 @@ public abstract class LayoutElement : Element
 
         _buffer = new GraphicBuffer();
         _outCanvas = new GraphicCanvas(_buffer);
+        _canvasView = _outCanvas.AsReadonly();
 
         PropertyChanged += LayoutPropertyChangedCallback;
     }
@@ -40,6 +45,8 @@ public abstract class LayoutElement : Element
     private GraphicCanvas _outCanvas;
     private LayoutResult _currentLayout;
     private LayoutElement[] _children;
+    private ReadonlyGraphicBuffer? _canvasView;
+
     //public abstract LayoutResult[] GetResultArray();
     //public abstract LayoutResult[] GetParentResultArray();
     protected abstract void OnResize(GraphicCanvas screenBuffer, Rectangle screenArea);
@@ -306,23 +313,32 @@ public abstract class LayoutElement : Element
         _children = children;
     }
 
-    public static RootElement? TreeFromXml(string path, Page page)
+    public static RootElement? TreeFromXml(string path, Page page, ExceptionHandler handler)
     {
-        XmlDocument document = new XmlDocument();
-        document.Load(path);
+        try
+        {
+            XmlDocument document = new XmlDocument();
+            document.Load(path);
+            
+            RootElement root = new RootElement();
+            root.Initialize(page, page);
 
-        RootElement root = new RootElement();
-        root.Initialize(page, page);
+            LayoutElement[] elements = document.ChildNodes.Count == 0 ? Array.Empty<LayoutElement>() : new LayoutElement[document.ChildNodes.Count];
 
-        LayoutElement[] elements = document.ChildNodes.Count == 0 ? Array.Empty<LayoutElement>() : new LayoutElement[document.ChildNodes.Count];
+            for (int i = 0; i < document.ChildNodes.Count; i++)
+                elements[i] = FromNode(document.ChildNodes.Item(i), page, root, handler);
 
-        for (int i = 0; i < document.ChildNodes.Count; i++)
-            elements[i] = FromNode(document.ChildNodes.Item(i), page, root);
+            root.SetChildren(elements);
+            return root;
+        }
+        catch(Exception e)
+        {
+            handler.Throw(e);
+            return null;
+        }
 
-        root.SetChildren(elements);
-        return root;
     }
-    private static LayoutElement FromNode(XmlNode node, Page page, ITransform parent)
+    private static LayoutElement FromNode(XmlNode node, Page page, ITransform parent, ExceptionHandler handler)
     {
         LayoutElement element = (LayoutElement)ElementCache.Instance.Instantiate(node.Name);
         element.Initialize(page, parent);
@@ -330,25 +346,28 @@ public abstract class LayoutElement : Element
         LayoutElement[] children = node.ChildNodes.Count == 0 ? Array.Empty<LayoutElement>() : new LayoutElement[node.ChildNodes.Count];
 
         for (int i = 0; i < node.ChildNodes.Count; i++)
-            children[i] = FromNode(node.ChildNodes.Item(i), page, element);
+            children[i] = FromNode(node.ChildNodes.Item(i), page, element, handler);
 
 
         // Get all properties in element type
-        //foreach (PropertyInfo prop in element.GetType().GetProperties().Where((x) => x.GetSetMethod(true) != null && x.GetGetMethod(true) != null))
-        //{
-        //    XmlAttribute? attribute = node.Attributes?[prop.Name];
-        //
-        //    // If property has been specified in XML
-        //    if (attribute == null)
-        //        continue;
-        //
-        //    // [!] Convert value to real type instead of string before converting
-        //    prop.SetValue(element, attribute.Value);
-        //}
-        //
-        element.SetChildren(children);
+        foreach (PropertyInfo prop in element.GetType().GetProperties().Where((x) => x.GetSetMethod(true) != null && x.GetGetMethod(true) != null))
+        {
+            XmlAttribute? attribute = node.Attributes?[prop.Name];
+        
+            // If property has been specified in XML
+            if (attribute == null || !prop.DeclaringType.IsAssignableFrom(typeof(IStringConvertible)))
+                continue;
+
+            // [!] Convert value to real type instead of string before converting
+            prop.SetValue(element, node.Value);
+        }
+        
+        if(element.IsContainer)
+            element.SetChildren(children);
+
         return element;
     }
 
+    private static Type[] StringTypeArray { get; } = new Type[] { typeof(string) };
     //private penis penis penis penis penis penis penis penis penis vagina porn fuck fuck homosexual sex balls and cock cum cum cum mhhhhhhhhhhhh
 }

@@ -34,4 +34,7 @@ public abstract class LayoutPage : Page, ITransform
 
         _root = root;
     }
+
+    internal override void Popup(string title, string text)
+        => Root.AddChild(new PopupElement(title, text));
 }

@@ -27,12 +27,27 @@
 
         public bool Add(T1 key, T2 value)
         {
-            return _elements.TryAdd(key, value);
+            lock(_lock)
+            {
+                 return _elements.TryAdd(key, value);
+            }
         }
 
         public bool Remove(T1 key)
         {
-            return _elements.Remove(key);
+            lock(_lock)
+            {
+                return _elements.Remove(key);
+            }
+        }
+
+        public voif Iterate(Action<T2> code)
+        {
+           lock(_lock)
+           {
+               foreach(var pair in _elements)
+                  code.Invoke(pair.Value);
+           }
         }
 
         public void Navigate(Func<T2, bool> predicate)

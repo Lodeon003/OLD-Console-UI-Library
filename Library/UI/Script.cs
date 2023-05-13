@@ -1,6 +1,7 @@
 ﻿using Lodeon.Terminal.UI.Layout;
 using Lodeon.Terminal.UI.Layout.Presets;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Lodeon.Terminal.UI;
 
@@ -28,11 +29,8 @@ public abstract class Script
 
 // --------- PRIVATE METHODS
 
-    private void Execute(Driver driver)
+    private void Initialize(ReadOnlySpan<Exception> initialExceptions)
     {
-        ArgumentNullException.ThrowIfNull(driver);
-        _output = driver;
-
         //_pages = new Dictionary<string, Page>();
         _exitSource = new CancellationTokenSource();
         _outputBuffer = new GraphicBuffer();
@@ -41,13 +39,14 @@ public abstract class Script
         _exceptionHandler.ExceptionThrown += ExceptionHandler_OnThrow;
         _exceptionHandler.ExceptionLogged += ExceptionHandler_OnLog;
 
-
         // Pages can add exceptions to the handler.
         Dictionary<string, Page> pages = new Dictionary<string, Page>();
         _navigator = new Navigator<string, Page>(pages);
 
         PageInitializer pageInit = new PageInitializer(pages, _navigator, _output, _outputBuffer, this, _exceptionHandler);
         this.OnInitialize(pageInit);
+
+        _exceptionHandler.Log(initialExceptions);
 
         _navigator.OnNavigate += PageNavigator_OnNavigate;
         _navigator.OnNavigateFail += PageNavigator_OnFail;
@@ -113,11 +112,15 @@ public abstract class Script
         ThrowIfNotExecuting();   
         _exceptionHandler.Log(new Exception("No page found with specified parameters"));
     }
-    private void PageNavigator_OnNavigate(Page value)
+    private void PageNavigator_OnNavigate(Page newPage)
     {
         ThrowIfNotExecuting();
-        _currentPage.Set(value);
-        OnPageChange?.Invoke(value);
+
+        if (_currentPage == newPage)
+            return;
+
+        _currentPage.Set(newPage);
+        OnPageChanged?.Invoke(newPage);
     }
     private void PageNavigator_OnExit()
         => Exit();
@@ -140,7 +143,6 @@ public abstract class Script
     protected virtual void OnInitializationFailed(IReadOnlyCollection<Exception> exceptions)
     {
         ThrowIfNotExecuting();
-
         _navigator.Navigate(new ErrorPage(exceptions));
     }   
 
@@ -150,16 +152,46 @@ public abstract class Script
 
 //  --------- STATIC METHODS --------------------------------------
 
-    public static async Task Run<T>(Driver customDriver) where T : Script, new()
+    public static async Task Run<T, TDriver>() where T : Script, new() where TDriver : Driver, new()
     {
-        ArgumentNullException.ThrowIfNull(customDriver);
+        //ArgumentNullException.ThrowIfNull(customDriver);
 
         T program = new T();
-        program.Execute(customDriver);
+
+        Driver driver;
+        List<Exception> initialExceptions = new List<Exception>();
+
+        try
+        {
+            driver = new TDriver();
+        }
+        catch(Exception e)
+        {
+            initialExceptions.Add(e);
+        }
+
+        program.Initialize(CollectionsMarshal.AsSpan(initialExceptions));
         await program.Wait();
     }
     public static async Task Run<T>() where T : Script, new()
-    => await Run<T>(Driver.GetDefaultDriver());
+    {
+        T program = new T();
+
+        Driver driver;
+        List<Exception> initialExceptions = new List<Exception>();
+
+        try
+        {
+            driver = Driver.GetDefaultDriver();
+        }
+        catch (Exception e)
+        {
+            initialExceptions.Add(e);
+        }
+
+        program.Initialize(CollectionsMarshal.AsSpan(initialExceptions));
+        await program.Wait();
+    }
 }
 
 /*

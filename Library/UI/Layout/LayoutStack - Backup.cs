@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace Lodeon.Terminal.UI.Layout;
 
-public ref struct LayoutStack
+public ref struct LayoutStackBackup
 {
     public enum HorizontalAlign
     {
@@ -38,7 +38,7 @@ public ref struct LayoutStack
     public PixelPoint Position => _position;
     public PixelPoint Size => _size;
 
-    public LayoutStack(PixelPoint position, PixelPoint size, HorizontalAlign horizontalAlign, VerticalAlign verticalAlign, Orientation orientation)
+    public LayoutStackBackup(PixelPoint position, PixelPoint size, HorizontalAlign horizontalAlign, VerticalAlign verticalAlign, Orientation orientation)
     {
         _position = position;
         _size = size;
@@ -50,56 +50,68 @@ public ref struct LayoutStack
 
     public void Calculate(Span<PixelLayout> layouts, Span<PixelPoint> positions)
     {
-        _currentX = _horizontal switch
-        {
-            HorizontalAlign.Left => _position.X,
-            HorizontalAlign.Center => _position.X,   // Centering will be handled later
-            HorizontalAlign.Right => _position.X + _size.X,
-            _ => throw new NotImplementedException(),
-        };
-
-        _currentY = _vertical switch
-        {
-            VerticalAlign.Top => _position.Y,
-            VerticalAlign.Center => _position.Y,   // Centering will be handled later
-            VerticalAlign.Bottom => _position.Y + _size.Y,
-            _ => throw new NotImplementedException(),
-        };
+        _currentX = _position.X;
+        _currentY = _position.Y;
 
         int totalSizeX = 0, totalSizeY = 0;
+
         for (int i = 0; i < layouts.Length; i++)
         {
             totalSizeX += layouts[i].Size.X + layouts[i].Margin.Size.X;
             totalSizeY += layouts[i].Size.Y + layouts[i].Margin.Size.Y;
+
+            int x = _currentX + layouts[i].Margin.Left;
+            int y = _currentY + layouts[i].Margin.Top;
+
+            positions[i] = new PixelPoint(x, y);
+
+            if(_orientation == Orientation.Horizontal)
+            {
+                _currentX += layouts[i].Size.X + layouts[i].Margin.Right;
+                continue;
+            }
+
+            _currentY += layouts[i].Size.Y + layouts[i].Margin.Bottom;
         }
 
-        if (_horizontal == HorizontalAlign.Center && _orientation == Orientation.Horizontal)
-            _currentX += (_size.X - totalSizeX) / 2;
-
-        if (_vertical == VerticalAlign.Center && _orientation == Orientation.Vertical)
-            _currentY += (_size.Y - totalSizeY) / 2;
-
-        // Invert loop order if starting from right or bottom
-        if (_orientation == Orientation.Horizontal && _horizontal == HorizontalAlign.Right ||
-        _orientation == Orientation.Vertical && _vertical == VerticalAlign.Bottom)
+        for(int i = 0; i < positions.Length; i++)
         {
-            for (int i = layouts.Length-1; i >= 0; i--)
+            int sizeX = _orientation == Orientation.Horizontal ? totalSizeX : positions[i].X;
+            int sizeY = _orientation == Orientation.Vertical ? totalSizeY : positions[i].Y;
+
+            int offset = 0;
+            switch (_horizontal)
             {
-                int x = UpdateX(layouts[i].Size, layouts[i].Margin);
-                int y = UpdateY(layouts[i].Size, layouts[i].Margin);
-                positions[i] = new PixelPoint(x, y);
+                case HorizontalAlign.Left:
+                    break;
+
+                case HorizontalAlign.Center:
+                    offset = (_size.X - sizeX) / 2;
+                    positions[i] = new(positions[i].X + offset, positions[i].Y);
+                    break;
+
+                case HorizontalAlign.Right:
+                    offset = _size.X - sizeX;
+                    positions[i] = new(positions[i].X + offset, positions[i].Y);
+                    break;
+            }
+
+            switch (_vertical)
+            {
+                case VerticalAlign.Top:
+                    break;
+
+                case VerticalAlign.Center:
+                    offset = (_size.Y - sizeY) / 2;
+                    positions[i] = new(positions[i].X, positions[i].Y + offset);
+                    break;
+
+                case VerticalAlign.Bottom:
+                    offset = _size.Y - sizeY;
+                    positions[i] = new(positions[i].X, positions[i].Y + offset);
+                    break;
             }
         }
-        else
-        {
-            for (int i = 0; i < layouts.Length; i++)
-            {
-                int x = UpdateX(layouts[i].Size, layouts[i].Margin);
-                int y = UpdateY(layouts[i].Size, layouts[i].Margin);
-                positions[i] = new PixelPoint(x, y);
-            }
-        }
-
     }
     private int UpdateX(PixelPoint size, Pixel4 margin)
     {
@@ -193,17 +205,5 @@ public ref struct LayoutStack
         }
 
         return result;
-    }
-}
-
-public struct PixelLayout
-{
-    public PixelPoint Size { get; set; }
-    public Pixel4 Margin { get; set; }
-
-    public PixelLayout(PixelPoint size, Pixel4 margin)
-    {
-        Size = size;
-        Margin = margin;
     }
 }

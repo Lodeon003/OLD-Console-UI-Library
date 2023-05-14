@@ -17,12 +17,12 @@ internal class LayoutStackTest
     {
         Driver driver = new AnsiDriver();
 
-        LayoutStack.Orientation orientation = LayoutStack.Orientation.Horizontal;
-        LayoutStack.HorizontalAlign horizontalAlign = LayoutStack.HorizontalAlign.Left;
-        LayoutStack.VerticalAlign verticalAlign = LayoutStack.VerticalAlign.Top;
+        LayoutStackBackup.Orientation orientation = LayoutStackBackup.Orientation.Horizontal;
+        LayoutStackBackup.HorizontalAlign horizontalAlign = LayoutStackBackup.HorizontalAlign.Left;
+        LayoutStackBackup.VerticalAlign verticalAlign = LayoutStackBackup.VerticalAlign.Top;
         PixelPoint size = new PixelPoint(40, 10);
         PixelPoint position = new PixelPoint(70, 20);
-        LayoutStack stack;
+        LayoutStackBackup stack;
         
         GraphicBuffer stackBuffer = new GraphicBuffer(size.X, size.Y);
         GraphicCanvas stackCanvas = new GraphicCanvas(stackBuffer);
@@ -47,20 +47,20 @@ internal class LayoutStackTest
             {
                 case ConsoleKey.O:
                     orientation++;
-                    if (orientation > LayoutStack.Orientation.Vertical)
-                        orientation = LayoutStack.Orientation.Horizontal;
+                    if (orientation > LayoutStackBackup.Orientation.Vertical)
+                        orientation = LayoutStackBackup.Orientation.Horizontal;
                     break;
 
                 case ConsoleKey.H:
                     horizontalAlign++;
-                    if (horizontalAlign > LayoutStack.HorizontalAlign.Right)
-                        horizontalAlign = LayoutStack.HorizontalAlign.Left;
+                    if (horizontalAlign > LayoutStackBackup.HorizontalAlign.Right)
+                        horizontalAlign = LayoutStackBackup.HorizontalAlign.Left;
                     break;
 
                 case ConsoleKey.V:
                     verticalAlign++;
-                    if (verticalAlign > LayoutStack.VerticalAlign.Bottom)
-                        verticalAlign = LayoutStack.VerticalAlign.Top;
+                    if (verticalAlign > LayoutStackBackup.VerticalAlign.Bottom)
+                        verticalAlign = LayoutStackBackup.VerticalAlign.Top;
                     break;
 
                 case ConsoleKey.C:
@@ -69,7 +69,7 @@ internal class LayoutStackTest
                     break;
 
             }
-            stack = new LayoutStack(position, size, horizontalAlign, verticalAlign, orientation);
+            stack = new LayoutStackBackup(position, size, horizontalAlign, verticalAlign, orientation);
             stack.Calculate(elements.Select(x => x.Layout).ToArray().AsSpan(), positions.AsSpan());
 
             driver.Clear();

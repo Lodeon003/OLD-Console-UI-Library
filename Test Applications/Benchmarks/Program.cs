@@ -29,22 +29,3 @@ void Lock2()
         Console.WriteLine("Test lock 2");
     }
 }*/
-
-struct Element
-{
-    public Element(PixelPoint siz, Pixel4 marg, Color col)
-    {
-        size = siz;
-        margin = marg;
-        color = col;
-        position = default;
-        buffer = new GraphicBuffer(size.X, size.Y);
-        buffer.Fill(col);
-    }
-
-    public GraphicBuffer buffer;
-    public PixelPoint position;
-    public PixelPoint size;
-    public Color color;
-    public Pixel4 margin;
-}

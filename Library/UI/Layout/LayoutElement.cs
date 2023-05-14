@@ -231,16 +231,16 @@ public abstract class LayoutElement : Element
         Pixel4 padding = Pixel4.Clamp(Pixel4.FromPoint(Padding, contentSize), MinPadding, MaxPadding);
 
         // Impelent struct algorithm
-        PixelPoint position = PositionKind switch
-        {
-            LayoutPosition.Stack => parentStack.Add(size, margin),
-            LayoutPosition.Absolute => PixelPoint.Clamp(PixelPoint.FromPoint(Position, contentSize), MinPosition, MaxPosition),
-            _ => throw new NotImplementedException($"Only {LayoutPosition.Stack} and {LayoutPosition.Absolute} have been defined")
-        };
-
+        //PixelPoint position = PositionKind switch
+        //{
+        //    LayoutPosition.Stack => parentStack.Add(size, margin),
+        //    LayoutPosition.Absolute => PixelPoint.Clamp(PixelPoint.FromPoint(Position, contentSize), MinPosition, MaxPosition),
+        //    _ => throw new NotImplementedException($"Only {LayoutPosition.Stack} and {LayoutPosition.Absolute} have been defined")
+        //};
+        throw new NotImplementedException();
         Pixel4 startArea, totalArea, actualArea, contentArea;
 
-        startArea = new Pixel4(position, size);
+        //startArea = new Pixel4(position, size);
         totalArea = Pixel4.Inflate(startArea, margin, TransformOrigin.TopLeft);
         actualArea = Pixel4.Deflate(totalArea, margin, TransformOrigin.Center);
         contentArea = Pixel4.Deflate(actualArea, padding, TransformOrigin.Center);

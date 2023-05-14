@@ -43,4 +43,9 @@ public readonly struct PixelPoint
 
     public static implicit operator System.Drawing.Point(PixelPoint point)
         => new System.Drawing.Point(point.X, point.Y);
+
+    public override string ToString()
+    {
+        return $"({X};{Y})";
+    }
 }

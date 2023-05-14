@@ -1,4 +1,6 @@
 ﻿using Lodeon.Terminal.UI.Units;
+using System.Buffers;
+using System.Runtime.InteropServices;
 
 namespace Lodeon.Terminal.UI.Layout;
 
@@ -7,15 +9,15 @@ public ref struct LayoutStack
     public enum HorizontalAlign
     {
         Left,
-        Right,
         Center,
+        Right,
     }
 
     public enum VerticalAlign
     {
         Top,
-        Bottom,
         Center,
+        Bottom,
     }
 
     public enum Orientation
@@ -24,11 +26,12 @@ public ref struct LayoutStack
         Vertical
     }
 
+
     private PixelPoint _size;
     private PixelPoint _position;
     private int _currentX = 0;
     private int _currentY = 0;
-    private HorizontalAlign _horiziontal;
+    private HorizontalAlign _horizontal;
     private VerticalAlign _vertical;
     private Orientation _orientation;
 
@@ -42,105 +45,148 @@ public ref struct LayoutStack
         _orientation = orientation;
 
         _vertical = verticalAlign;
-        _horiziontal = horizontalAlign;
-
-        _currentX = horizontalAlign switch
-        {
-            HorizontalAlign.Left => position.X,
-            HorizontalAlign.Right => position.X + size.X,
-            _ => throw new NotImplementedException(),
-        };
-
-        _currentY = verticalAlign switch
-        {
-            VerticalAlign.Top => position.Y,
-            VerticalAlign.Bottom => position.Y + size.Y,
-            _ => throw new NotImplementedException(),
-        };
+        _horizontal = horizontalAlign;
     }
 
-    /// <summary>
-    /// Returns the position of an element with a size and margin if it was to be added to the layout.<br/>
-    /// Adding items will change the position of next item added
-    /// </summary>
-    /// <param name="size">The size in pixels of the element to add</param>
-    /// <param name="margin">The margin in pixel of the element to add</param>
-    /// <returns></returns>
-    public PixelPoint Add(PixelPoint size, Pixel4 margin)
+    public void Calculate(Span<PixelLayout> layouts, Span<PixelPoint> positions)
     {
-        // Add initial margin
-        if(_horiziontal == HorizontalAlign.Left)
+        _currentX = _horizontal switch
+        {
+            HorizontalAlign.Left => _position.X,
+            HorizontalAlign.Center => _position.X,   // Centering will be handled later
+            HorizontalAlign.Right => _position.X + _size.X,
+            _ => throw new NotImplementedException(),
+        };
+
+        _currentY = _vertical switch
+        {
+            VerticalAlign.Top => _position.Y,
+            VerticalAlign.Center => _position.Y,   // Centering will be handled later
+            VerticalAlign.Bottom => _position.Y + _size.Y,
+            _ => throw new NotImplementedException(),
+        };
+
+        int totalSizeX = 0, totalSizeY = 0;
+        for (int i = 0; i < layouts.Length; i++)
+        {
+            totalSizeX += layouts[i].Size.X + layouts[i].Margin.Size.X;
+            totalSizeY += layouts[i].Size.Y + layouts[i].Margin.Size.Y;
+        }
+
+        if (_horizontal == HorizontalAlign.Center && _orientation == Orientation.Horizontal)
+            _currentX += (_size.X - totalSizeX) / 2;
+
+        if (_vertical == VerticalAlign.Center && _orientation == Orientation.Vertical)
+            _currentY += (_size.Y - totalSizeY) / 2;
+
+        // Invert loop order if starting from right or bottom
+        if (_orientation == Orientation.Horizontal && _horizontal == HorizontalAlign.Right ||
+        _orientation == Orientation.Vertical && _vertical == VerticalAlign.Bottom)
+        {
+            for (int i = layouts.Length-1; i >= 0; i--)
+            {
+                int x = UpdateX(layouts[i].Size, layouts[i].Margin);
+                int y = UpdateY(layouts[i].Size, layouts[i].Margin);
+                positions[i] = new PixelPoint(x, y);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < layouts.Length; i++)
+            {
+                int x = UpdateX(layouts[i].Size, layouts[i].Margin);
+                int y = UpdateY(layouts[i].Size, layouts[i].Margin);
+                positions[i] = new PixelPoint(x, y);
+            }
+        }
+
+    }
+    private int UpdateX(PixelPoint size, Pixel4 margin)
+    {
+        int result = 0;
+
+        // If left or center (center is treated as left but with added offset)
+        if (_horizontal != HorizontalAlign.Right)
         {
             _currentX += margin.Left;
-        }
-        else if (_horiziontal == HorizontalAlign.Right)
-        {
-            _currentX -= margin.Right;
-            _currentX -= margin.Left;
-        }
-
-        if (_vertical == VerticalAlign.Top)
-        {
-            _currentY += margin.Top;
-        }
-        else if (_vertical == VerticalAlign.Bottom)
-        {
-            _currentY -= margin.Bottom;
-            _currentY -= size.Y;
-        }
-
-        PixelPoint result = new PixelPoint(_currentX, _currentY);
-
-
-        // Add end margin
-        if (_horiziontal == HorizontalAlign.Left)
-        {
+            
+            result = _currentX;
+            
             if(_orientation == Orientation.Horizontal)
             {
-                _currentX += margin.Right;
                 _currentX += size.X;
-            }
-            else if (_orientation == Orientation.Vertical)
-            {
-                _currentX -= margin.Left;
-            }
-        }
-        else if (_horiziontal == HorizontalAlign.Right)
-        {
-            if (_orientation == Orientation.Horizontal)
-            {
-                _currentX -= size.X;
-            }
-            else if (_orientation == Orientation.Vertical)
-            {
                 _currentX += margin.Right;
             }
+            else
+                _currentX -= margin.Left;
+            
+            return result;
+        }
+        
+
+        // If RIGHT
+        _currentX -= margin.Right;
+        _currentX -= size.X;
+        result = _currentX;
+
+        if (_orientation == Orientation.Horizontal)
+        {
+            _currentX -= margin.Left;
+        }
+        else
+        {
+            _currentX += margin.Right;
+            _currentX += size.X;
         }
 
-        if (_vertical == VerticalAlign.Top)
+        return result;
+    }
+    private int UpdateY(PixelPoint size, Pixel4 margin)
+    {
+        int result = 0;
+        if (_vertical != VerticalAlign.Bottom)
         {
-            if(_orientation == Orientation.Vertical)
+            _currentY += margin.Top;
+            result = _currentY;
+
+            if (_orientation == Orientation.Vertical)
             {
                 _currentY += size.Y;
                 _currentY += margin.Bottom;
             }
-            else if (_orientation == Orientation.Horizontal)
-            {
-                _currentY -= margin.Top;
-            }
-        }
-        else if (_vertical == VerticalAlign.Bottom)
-        {
-            if (_orientation == Orientation.Vertical)
-            {
-                _currentY -= margin.Top;
-            }
             else
-            {
-                _currentY += margin.Bottom;
-            }
+                _currentY -= margin.Top;
+            
+            return result;
+        }
+       
+        // IF BOTTOM
+        _currentY -= margin.Bottom;
+        _currentY -= size.Y;
+        result = _currentY;
+
+        if (_orientation == Orientation.Vertical)
+        {
+            _currentY -= margin.Top;
+        }
+        else
+        {
+            _currentY += size.Y;
+            _currentY += margin.Bottom;
         }
 
         return result;
+    }
+}
+
+public struct PixelLayout
+{
+    public PixelPoint Size { get; set; }
+    public Pixel4 Margin { get; set; }
+
+    public PixelLayout(PixelPoint size, Pixel4 margin)
+    {
+        Size = size;
+        Margin = margin;
     }
 }

@@ -9,6 +9,8 @@ public readonly struct Pixel4
     public readonly int Right;
     public readonly int Bottom;
 
+    public static Pixel4 One => new Pixel4(1, 1, 1, 1);
+
     public PixelPoint TopLeft => new PixelPoint(Left, Top);
 
     /// <summary>

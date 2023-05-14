@@ -17,18 +17,18 @@ using System.Runtime.InteropServices;
     [_] Implement system to return array of expeptions from Page's and Element's Initialize functions and have an overridable method - Page OnInitializeException(ExceptionCollection exceptions)
         . in Program class that prints errors in a custom error page by default. Method must return a custom page to display in case of errors.
         . The ExceptionCollection must have an internal Add method and public iterator. That collection should be given by the script so not to create many objects. Program could just check after everything is initialized if Exceptions.Count == 0
-
-    [#] Add OnFocus and OnLostFocus events for elements. Add method Unfocus() on elements class
     
-    [#] Make sure page and program methods are not exposed. Create navigator class that allows elements and pages to notify program when to change pages.
+    [_] Make sure page and program methods are not exposed. Create navigator class that allows elements and pages to notify program when to change pages.
         . OnNavigate<TValue>(), Next(), Previous(), Navigate(TKey), Navigate(Value), Values.
  
+    [#] Add OnFocus and OnLostFocus events for elements. Add method Unfocus() on elements class
+
     [#] Fix layout element Update method as having all children update in the "Update method" of one of them is bad idea.
         If all children get updated, every children updates every children
 
     [=] LayoutElement TreeFromXML with attribute for naming
 
-    [#] Implement event on Driver class that fires whenever output window's size changes. Not sure on how to force it
+    [_] Implement event on Driver class that fires whenever output window's size changes. Not sure on how to force it
 
     [_] Layout property change updates graphics and recalculates LayoutResults
         

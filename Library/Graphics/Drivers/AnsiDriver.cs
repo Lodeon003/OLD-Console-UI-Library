@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace Lodeon.Terminal.Graphics.Drivers;
 
-public class AnsiDriver : Driver
+public sealed class AnsiDriver : Driver
 {
     private Pixel _lastPixel = Pixel.Invisible;
 
@@ -62,10 +62,14 @@ public class AnsiDriver : Driver
 
     public bool AllowOutOfBounds { get; set; } = true;
     public bool AllowTransparentColors { get; set; } = false;
-    public override int ScreenWidth => Math.Min(Console.BufferWidth, Console.WindowWidth);
-    public override int ScreenHeight => Math.Min(Console.BufferHeight, Console.WindowHeight);
-
+    public override int ScreenWidth => _screenWidth;
+    public override int ScreenHeight => _screenHeight;
     public byte ColorSimilarityThreshold { get; private init; }
+
+    private int _lastWidth = 0;
+    private int _lastHeight = 0;
+    private int _screenWidth = 0;
+    private int _screenHeight = 0;
 
     /// <summary>
     /// <inheritdoc/>
@@ -76,7 +80,9 @@ public class AnsiDriver : Driver
     public AnsiDriver(byte colorSimilarityThreshold = 0) : base()
     {
         ColorSimilarityThreshold = colorSimilarityThreshold;
+        
         Setup();
+        UpdateWindowSize();
 
         Task.Run(Input);
     }
@@ -93,7 +99,6 @@ public class AnsiDriver : Driver
                 throw new DriverException("Couldn't enable terminal graphics on this windows version");
         }
     }
-
 
     private async Task Input()
     {
@@ -119,6 +124,93 @@ public class AnsiDriver : Driver
         }
     }
 
+    private void UpdateWindowSize()
+    {
+        _lastWidth = _screenWidth;
+        _lastHeight = _screenHeight;
+        _screenWidth = Math.Min(Console.WindowWidth, Console.BufferWidth);
+        _screenHeight = Math.Min(Console.BufferHeight, Console.WindowHeight);
+    }
+
+    private void InvokeWindowIfResize()
+    {
+        if (_lastWidth == _screenWidth && _lastHeight == _screenWidth)
+            return;
+
+        WindowResized?.Invoke(new(_lastWidth, _lastHeight), new(_screenWidth, _screenHeight));
+    }
+
+    private void ModifyForegroundSequence(Color color)
+        => ModifyColorSequence(color.Red, color.Green, color.Blue, _foregroundSequence);
+
+    private void ModifyBackgroundSequence(Color color)
+        => ModifyColorSequence(color.Red, color.Green, color.Blue, _backgroundSequence);
+
+    private void ModifyColorSequence(byte red, byte green, byte blue, char[] sequenceArray)
+    {
+        string redStr = red.ToString("D3");
+        string blueStr = blue.ToString("D3");
+        string greenStr = green.ToString("D3");
+
+        //ToCharArray(red, sequenceArray, _colorSequenceRed);
+        //ToCharArray(green, sequenceArray, _colorSequenceBlue);
+        //ToCharArray(blue, sequenceArray, _colorSequenceGreen);
+
+        for (int i = 0; i < 3; i++)
+        {
+            sequenceArray[_colorSequenceRed + i] = redStr[i];
+            sequenceArray[_colorSequenceBlue + i] = blueStr[i];
+            sequenceArray[_colorSequenceGreen + i] = greenStr[i];
+        }
+    }
+    private void ModifyCursorSequence(int x, int y)
+    {
+        if (x < 0 || y < 0 || x > 99999 || y > 99999)
+            throw new NotImplementedException("The array allocates 5 chars for each coordinate");
+        // Console index starts at 0;0 but ANSI cursor position start from 1;1
+        string xStr = (x + 1).ToString("D5");
+        string yStr = (y + 1).ToString("D5");
+
+        //ToCharArray((uint)x + 1, _cursorPositionSequence, _cursorSequenceX);
+        //ToCharArray((uint)y + 1, _cursorPositionSequence, _cursorSequenceY);
+
+        for (int i = 0; i < 5; i++)
+        {
+            _cursorPositionSequence[_cursorSequenceX + i] = xStr[i];
+            _cursorPositionSequence[_cursorSequenceY + i] = yStr[i];
+        }
+    }
+
+
+    /// <summary>
+    /// To test! Make it so number pads to the right and not to the left if it doesn't occupy all space available.<br/>
+    /// Implement in function <see cref="ModifyCursorSequence(int, int)"/> <see cref="ModifyColorSequence(byte, byte, byte, char[])"/>
+    /// and <see cref="ModifyBackgroundSequence(Color)"/> replacing the "ToString".
+    /// </summary>
+    private int ToCharArray(uint value, Span<char> buffer, int bufferIndex)
+    {
+        if (value == 0)
+        {
+            buffer[bufferIndex] = '0';
+            return 1;
+        }
+
+        int len = 1;
+        for (uint rem = value / 10; rem > 0; rem /= 10)
+            len++;
+
+        // Throw if number is too big
+
+        for (int i = len - 1; i >= 0; i--)
+        {
+            buffer[bufferIndex + i] = (char)('0' + value % 10);
+            value /= 10;
+        }
+        return len;
+    }
+
+
+    #region Class Overrides
     /// <summary>
     /// [!] Check if window was resized form last display. If it was perform a Console.Clear()<br/>
     /// to reset the borders and maybe fire an event with current width and height and last<br/>
@@ -126,6 +218,8 @@ public class AnsiDriver : Driver
     /// </summary>
     protected sealed override void OnDisplay(ReadOnlySpan<Pixel> buffer, Rectangle sourceArea, Point destinationPosition)
     {
+        UpdateWindowSize();
+        
         if (buffer.Length == 0 || buffer.Length < sourceArea.Width * sourceArea.Height)
             return;
 
@@ -190,123 +284,8 @@ public class AnsiDriver : Driver
         // Flush output buffer to the console
         Span<char> outSpan = CollectionsMarshal.AsSpan(_outputTextBuffer);
         Console.Out.Write(outSpan);
-    }
 
-    public override void OnClear()
-        => Console.Clear();
-
-    /// <summary>
-    /// Clears the console buffer and changes the background color of the whole buffer
-    /// </summary>
-    /// <param name="background"></param>
-    protected override void OnClear(Color background)
-    {
-        UpdateWindowSize();
-        int length = Console.WindowWidth * Console.WindowHeight;
-
-        Span<char> sp = ArrayPool<char>.Shared.Rent(length).AsSpan();
-        sp = sp.Slice(0, length);
-
-        for (int i = 0; i < length; i++)
-            sp[i] = ' ';
-
-        OnSetBackground(background);
-        Display(sp, Point.Empty);
         InvokeWindowIfResize();
-    }
-
-    private void UpdateWindowSize()
-    {
-
-    }
-
-    private void InvokeWindowIfResize()
-    {
-
-    }
-
-    protected override void OnSetBackground(Color background)
-    {
-        Pixel pixel = new Pixel().WithBackground(background);
-
-        Span<Pixel> span = MemoryMarshal.CreateSpan(ref pixel, 1);
-        Display(span, new Rectangle(0, 0, 1, 1), Point.Empty);
-    }
-
-    protected override void OnSetForeground(Color foreground)
-    {
-        Pixel pixel = new Pixel().WithForeground(foreground);
-
-        Span<Pixel> span = MemoryMarshal.CreateSpan(ref pixel, 1);
-        Display(span, new Rectangle(0, 0, 1, 1), Point.Empty);
-    }
-
-    private void ModifyForegroundSequence(Color color)
-    => ModifyColorSequence(color.Red, color.Green, color.Blue, _foregroundSequence);
-
-    private void ModifyBackgroundSequence(Color color)
-    => ModifyColorSequence(color.Red, color.Green, color.Blue, _backgroundSequence);
-
-    private void ModifyColorSequence(byte red, byte green, byte blue, char[] sequenceArray)
-    {
-        string redStr = red.ToString("D3");
-        string blueStr = blue.ToString("D3");
-        string greenStr = green.ToString("D3");
-
-        //ToCharArray(red, sequenceArray, _colorSequenceRed);
-        //ToCharArray(green, sequenceArray, _colorSequenceBlue);
-        //ToCharArray(blue, sequenceArray, _colorSequenceGreen);
-
-        for (int i = 0; i < 3; i++)
-        {
-            sequenceArray[_colorSequenceRed + i] = redStr[i];
-            sequenceArray[_colorSequenceBlue + i] = blueStr[i];
-            sequenceArray[_colorSequenceGreen + i] = greenStr[i];
-        }
-    }
-    private void ModifyCursorSequence(int x, int y)
-    {
-        if (x < 0 || y < 0 || x > 99999 || y > 99999)
-            throw new NotImplementedException("The array allocates 5 chars for each coordinate");
-        // Console index starts at 0;0 but ANSI cursor position start from 1;1
-        string xStr = (x + 1).ToString("D5");
-        string yStr = (y + 1).ToString("D5");
-
-        //ToCharArray((uint)x + 1, _cursorPositionSequence, _cursorSequenceX);
-        //ToCharArray((uint)y + 1, _cursorPositionSequence, _cursorSequenceY);
-
-        for (int i = 0; i < 5; i++)
-        {
-            _cursorPositionSequence[_cursorSequenceX + i] = xStr[i];
-            _cursorPositionSequence[_cursorSequenceY + i] = yStr[i];
-        }
-    }
-
-    /// <summary>
-    /// To test! Make it so number pads to the right and not to the left if it doesn't occupy all space available.<br/>
-    /// Implement in function <see cref="ModifyCursorSequence(int, int)"/> <see cref="ModifyColorSequence(byte, byte, byte, char[])"/>
-    /// and <see cref="ModifyBackgroundSequence(Color)"/> replacing the "ToString".
-    /// </summary>
-    public int ToCharArray(uint value, Span<char> buffer, int bufferIndex)
-    {
-        if (value == 0)
-        {
-            buffer[bufferIndex] = '0';
-            return 1;
-        }
-
-        int len = 1;
-        for (uint rem = value / 10; rem > 0; rem /= 10)
-            len++;
-
-        // Throw if number is too big
-
-        for (int i = len - 1; i >= 0; i--)
-        {
-            buffer[bufferIndex + i] = (char)('0' + value % 10);
-            value /= 10;
-        }
-        return len;
     }
 
     protected override void OnDisplay(ReadOnlySpan<char> buffer, Point destinationPosition)
@@ -315,8 +294,54 @@ public class AnsiDriver : Driver
         Console.Out.Write(buffer);
     }
 
+    protected override void OnClear()
+        => OnClear(Color.Black);
+
+    protected override void OnClear(Color background)
+    {
+        UpdateWindowSize();
+        
+        int length = Console.WindowWidth * Console.WindowHeight;
+
+        Span<char> sp = ArrayPool<char>.Shared.Rent(length).AsSpan();
+        sp = sp.Slice(0, length);
+
+        for (int i = 0; i < length; i++)
+            sp[i] = ' ';
+
+        OnSetBackground(background.Opaque());
+        Display(sp, Point.Empty);
+        
+        InvokeWindowIfResize();
+    }
+
+    protected override void OnSetBackground(Color background)
+    {
+        UpdateWindowSize();
+
+        Pixel pixel = new Pixel().WithBackground(background);
+
+        Span<Pixel> span = MemoryMarshal.CreateSpan(ref pixel, 1);
+        Display(span, new Rectangle(0, 0, 1, 1), Point.Empty);
+
+        InvokeWindowIfResize();
+    }
+
+    protected override void OnSetForeground(Color foreground)
+    {
+        UpdateWindowSize();
+
+        Pixel pixel = new Pixel().WithForeground(foreground);
+
+        Span<Pixel> span = MemoryMarshal.CreateSpan(ref pixel, 1);
+        Display(span, new Rectangle(0, 0, 1, 1), Point.Empty);
+
+        InvokeWindowIfResize();
+    }
+
     protected override void OnDispose()
     {
         _disposeToken?.Dispose();
     }
+    #endregion
 }

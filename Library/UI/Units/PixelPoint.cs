@@ -1,5 +1,8 @@
 ﻿namespace Lodeon.Terminal.UI.Units;
 
+/// <summary>
+/// Represents an integer point on a 2D surface<br/>(Is implicitly converted from and to a <see cref="System.Drawing.Point"/>)
+/// </summary>
 public readonly struct PixelPoint
 {
     public readonly int X;
@@ -34,4 +37,10 @@ public readonly struct PixelPoint
 
     public static PixelPoint operator +(PixelPoint a, PixelPoint b)
         => new PixelPoint(a.X + b.X, a.Y + b.Y);
+
+    public static implicit operator PixelPoint(System.Drawing.Point point)
+        => new PixelPoint(point.X, point.Y);
+
+    public static implicit operator System.Drawing.Point(PixelPoint point)
+        => new System.Drawing.Point(point.X, point.Y);
 }

@@ -41,22 +41,22 @@ public class WindowsDriver : Driver
     public override event MouseInputDel? MouseInputDown;
     public override event MouseInputDel? MouseInputUp;
 
-    public override void Clear()
+    protected override void OnSetBackground(Color background)
     {
         throw new NotImplementedException();
     }
 
-    public override void Clear(Color background)
+    protected override void OnSetForeground(Color foreground)
     {
         throw new NotImplementedException();
     }
 
-    public override void OnSetBackground(Color background)
+    protected override void OnClear()
     {
         throw new NotImplementedException();
     }
 
-    public override void OnSetForeground(Color foreground)
+    protected override void OnClear(Color background)
     {
         throw new NotImplementedException();
     }

@@ -3,6 +3,7 @@ using System;
 using Rectangle = System.Drawing.Rectangle;
 using Point = System.Drawing.Point;
 using Lodeon.Terminal.Graphics.Drivers;
+using Lodeon.Terminal.UI.Units;
 
 /// <summary>
 /// Base class for graphic drivers. A graphic driver is used by the library as an interface to display graphics. <br/>
@@ -12,14 +13,14 @@ using Lodeon.Terminal.Graphics.Drivers;
 /// </summary>
 public abstract class Driver : IDisposable
 {
-    public delegate void WindowResizedDel(Rectangle lastSize, Rectangle newSize);
+    public delegate void WindowResizedDel(PixelPoint lastSize, PixelPoint newSize);
     public abstract event WindowResizedDel? WindowResized;
 
     public delegate void ConsoleInputDel(ConsoleKeyInfo keyInfo);
     public abstract event ConsoleInputDel? KeyboardInputDown;
     public abstract event ConsoleInputDel? KeyboardInputUp;
 
-    public delegate void MouseInputDel(int button, Point position);
+    public delegate void MouseInputDel(int button, PixelPoint position);
     public abstract event MouseInputDel? MouseInputDown;
     public abstract event MouseInputDel? MouseInputUp;
 
@@ -42,6 +43,24 @@ public abstract class Driver : IDisposable
             throw new InvalidOperationException("Terminal graphics are disabled for this process");
     }
 
+
+    /// <summary>
+    /// Returns a driver that bests fits the current operating system
+    /// </summary>
+    /// <returns>An instance of a Driver class</returns>
+    /// <exception cref="DriverException"/>
+    public static Driver GetDefaultDriver()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return new WindowsDriver();
+        }
+        return new AnsiDriver();
+    }
+
+
+    #region PUBLIC METHODS
+
     /// <summary>
     /// Displays to the screen a graphic
     /// </summary
@@ -61,6 +80,7 @@ public abstract class Driver : IDisposable
             OnDisplay(graphic.GetGraphics(), sourceArea, new Point(screenArea.X, screenArea.Y));
         }
     }
+
 
     /// <summary>
     /// Displays to the screen a portion of a graphic
@@ -83,6 +103,7 @@ public abstract class Driver : IDisposable
         }
     }
 
+
     /// <summary>
     /// Displays to the screen a portion of a graphic at the specified position
     /// </summary>
@@ -100,6 +121,7 @@ public abstract class Driver : IDisposable
             OnDisplay(graphic.GetGraphics(), sourceArea, destinationPosition);
         }
     }
+
 
     /// <summary>
     /// add description
@@ -119,6 +141,7 @@ public abstract class Driver : IDisposable
         }
     }
 
+
     /// <summary>
     /// Displays a row of characters starting from a certain point on the screen
     /// </summary>
@@ -134,6 +157,7 @@ public abstract class Driver : IDisposable
         }
     }
     
+
     /// <summary>
     /// IDisposable implementation. Call to release all unmanaged resources
     /// </summary>
@@ -149,18 +173,6 @@ public abstract class Driver : IDisposable
         }
     }
 
-    /// <summary>
-    /// Implementation: show specified data to the console screen
-    /// </summary>
-    /// <param name="buffer">Memory representing an array of <see cref="Pixel"/>s to display</param>
-    /// <param name="sourceArea">The area of the array where to take pixels from</param>
-    /// <param name="destinationPosition">Where to display the array on screen</param>
-    protected abstract void OnDisplay(ReadOnlySpan<Pixel> buffer, Rectangle sourceArea, Point destinationPosition);
-    
-    /// <summary>
-    /// Implementation: display specified text on screen at specified destination
-    /// </summary>
-    protected abstract void OnDisplay(ReadOnlySpan<char> buffer, Point destinationPosition);
 
     /// <summary>
     /// Clears the console buffer
@@ -172,32 +184,17 @@ public abstract class Driver : IDisposable
             OnClear();
         }
     }
-    /// <summary>
-    /// 
-    /// </summary>
-    protected abstract void OnClear();
+    
 
     /// <summary>
     /// Clears the console buffer and changes the background color of the whole buffer
     /// </summary>
-    public abstract void Clear(Color background);
-    /// <summary>
-    /// Callback raised when <see cref="Dispose"/> method gets called on this object and it hasn't been desposed yet
-    /// </summary>
-    protected abstract void OnDispose();
-
-    /// <summary>
-    /// Returns a driver that bests fits the current operating system
-    /// </summary>
-    /// <returns>An instance of a Driver class</returns>
-    /// <exception cref="DriverException"/>
-    public static Driver GetDefaultDriver()
+    public void Clear(Color background)
     {
-        if(OperatingSystem.IsWindows())
+        lock(_lock)
         {
-            return new WindowsDriver();
+            OnClear(background);
         }
-        return new AnsiDriver();
     }
 
 
@@ -213,7 +210,6 @@ public abstract class Driver : IDisposable
             OnSetBackground(background);
         }
     }
-    protected abstract void OnSetBackground(Color background);
 
     /// <summary>
     /// Set foreground color of the console's cursor
@@ -226,5 +222,49 @@ public abstract class Driver : IDisposable
             OnSetForeground(foreground);
         }
     }
-    public abstract void OnSetForeground(Color foreground);
+    #endregion
+
+    #region Protected Callbacks
+    /// <summary>
+    /// Implementation: show specified data to the console screen
+    /// </summary>
+    /// <param name="buffer">Memory representing an array of <see cref="Pixel"/>s to display</param>
+    /// <param name="sourceArea">The area of the array where to take pixels from</param>
+    /// <param name="destinationPosition">Where to display the array on screen</param>
+    protected abstract void OnDisplay(ReadOnlySpan<Pixel> buffer, Rectangle sourceArea, Point destinationPosition);
+
+
+    /// <summary>
+    /// Implementation: display specified text on screen at specified destination
+    /// </summary>
+    protected abstract void OnDisplay(ReadOnlySpan<char> buffer, Point destinationPosition);
+
+
+    /// <summary>
+    /// Implementation: set foreground color of console's cursor
+    /// </summary>
+    protected abstract void OnSetForeground(Color foreground);
+
+    /// <summary>
+    /// Implementation: set background color of console's cursor
+    /// </summary>
+    protected abstract void OnSetBackground(Color background);
+
+    /// <summary>
+    /// Implementation: delete all text visible on screen
+    /// </summary>
+    protected abstract void OnClear();
+
+
+    /// <summary>
+    /// Implementation: Delete all text visible on screen and change background to the specified color
+    /// </summary>
+    protected abstract void OnClear(Color background);
+
+
+    /// <summary>
+    /// Callback raised when <see cref="Dispose"/> method gets called on this object and it hasn't been desposed yet
+    /// </summary>
+    protected abstract void OnDispose();
+    #endregion
 }

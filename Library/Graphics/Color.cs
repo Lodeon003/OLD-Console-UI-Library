@@ -24,10 +24,10 @@ public struct Color
     /// <summary>
     /// Returns wether this color is visible and not opaque <code>IsVisible and !IsOpaque</code>
     /// </summary>
-    public bool IsTransparent => IsVisible && !IsOpaque;
+    public bool IsSemiTransparent => IsVisible && !IsOpaque;
 
     /// <summary>
-    /// Same as calling <see cref="Color.FromRGBA(byte, byte, byte, byte)"/>
+    /// Returns an RGBA color with specified values
     /// </summary>
     public Color(byte red, byte green, byte blue, byte alpha)
     {
@@ -38,7 +38,7 @@ public struct Color
     }
 
     /// <summary>
-    /// Same as calling <see cref="Color.FromRGB(byte, byte, byte)"/>
+    /// Returns an RGB color with specified values and full alpha (255)
     /// </summary>
     public Color(byte red, byte green, byte blue)
     {
@@ -82,6 +82,13 @@ public struct Color
     public static Color FromRGB(byte red, byte green, byte blue)
         => new Color(red, green, blue, 255);
 
+    public static Color Random()
+    {
+        byte red = (byte)System.Random.Shared.Next(byte.MinValue, byte.MaxValue);
+        byte blue = (byte)System.Random.Shared.Next(byte.MinValue, byte.MaxValue);
+        byte green = (byte)System.Random.Shared.Next(byte.MinValue, byte.MaxValue);
+        return new Color(red, blue, green);
+    }
 
     public bool IsSimilar(Color c, byte threshold)
     {

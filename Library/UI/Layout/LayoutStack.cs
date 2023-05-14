@@ -7,15 +7,21 @@ public ref struct LayoutStack
     public enum HorizontalAlign
     {
         Left,
+        Right,
         Center,
-        Right
     }
 
     public enum VerticalAlign
     {
         Top,
+        Bottom,
         Center,
-        Bottom
+    }
+
+    public enum Orientation
+    {
+        Horizontal,
+        Vertical
     }
 
     private PixelPoint _size;
@@ -24,11 +30,16 @@ public ref struct LayoutStack
     private int _currentY = 0;
     private HorizontalAlign _horiziontal;
     private VerticalAlign _vertical;
+    private Orientation _orientation;
 
-    public LayoutStack(PixelPoint position, PixelPoint size, HorizontalAlign horizontalAlign, VerticalAlign verticalAlign)
+    public PixelPoint Position => _position;
+    public PixelPoint Size => _size;
+
+    public LayoutStack(PixelPoint position, PixelPoint size, HorizontalAlign horizontalAlign, VerticalAlign verticalAlign, Orientation orientation)
     {
         _position = position;
         _size = size;
+        _orientation = orientation;
 
         _vertical = verticalAlign;
         _horiziontal = horizontalAlign;
@@ -59,27 +70,76 @@ public ref struct LayoutStack
     {
         // Add initial margin
         if(_horiziontal == HorizontalAlign.Left)
+        {
             _currentX += margin.Left;
+        }
         else if (_horiziontal == HorizontalAlign.Right)
+        {
             _currentX -= margin.Right;
+            _currentX -= margin.Left;
+        }
 
         if (_vertical == VerticalAlign.Top)
+        {
             _currentY += margin.Top;
+        }
         else if (_vertical == VerticalAlign.Bottom)
+        {
             _currentY -= margin.Bottom;
+            _currentY -= size.Y;
+        }
 
         PixelPoint result = new PixelPoint(_currentX, _currentY);
 
+
         // Add end margin
         if (_horiziontal == HorizontalAlign.Left)
-            _currentX += margin.Right;
+        {
+            if(_orientation == Orientation.Horizontal)
+            {
+                _currentX += margin.Right;
+                _currentX += size.X;
+            }
+            else if (_orientation == Orientation.Vertical)
+            {
+                _currentX -= margin.Left;
+            }
+        }
         else if (_horiziontal == HorizontalAlign.Right)
-            _currentX -= margin.Left;
+        {
+            if (_orientation == Orientation.Horizontal)
+            {
+                _currentX -= size.X;
+            }
+            else if (_orientation == Orientation.Vertical)
+            {
+                _currentX += margin.Right;
+            }
+        }
 
         if (_vertical == VerticalAlign.Top)
-            _currentY += margin.Bottom;
+        {
+            if(_orientation == Orientation.Vertical)
+            {
+                _currentY += size.Y;
+                _currentY += margin.Bottom;
+            }
+            else if (_orientation == Orientation.Horizontal)
+            {
+                _currentY -= margin.Top;
+            }
+        }
         else if (_vertical == VerticalAlign.Bottom)
-            _currentY -= margin.Top;
+        {
+            if (_orientation == Orientation.Vertical)
+            {
+                _currentY -= margin.Top;
+            }
+            else
+            {
+                _currentY += margin.Bottom;
+            }
+        }
 
         return result;
     }

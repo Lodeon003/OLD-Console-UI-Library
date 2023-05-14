@@ -292,7 +292,8 @@ public abstract class LayoutElement : Element
             elements = parent._children;
         }
 
-        LayoutStack parentStack = new LayoutStack(parentLayout.Position, parentLayout.ContentArea.RectSize, LayoutStack.HorizontalAlign.Left, LayoutStack.VerticalAlign.Top);
+        throw new NotImplementedException("Stacking algorithm should depend on parent's enum");
+        LayoutStack parentStack = new LayoutStack(parentLayout.Position, parentLayout.ContentArea.RectSize, LayoutStack.HorizontalAlign.Left, LayoutStack.VerticalAlign.Top, LayoutStack.Orientation.Horizontal);
         
         // Calculate this element's layout (and siblings' layout if there are)
         for (int i = 0; i < elements.Length; i++)

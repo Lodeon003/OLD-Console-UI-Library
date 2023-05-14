@@ -7,6 +7,7 @@ namespace Lodeon.Terminal;
 
 /// <summary>
 /// [!] Testing. <see cref="Overlay(GraphicBuffer)"/> doesn't work correctly
+/// [!] Make thread safe
 /// </summary>
 public class GraphicBuffer : IRenderable
 {
@@ -22,13 +23,13 @@ public class GraphicBuffer : IRenderable
     public Pixel this[int index]
         => _buffer[index];
 
-    public Pixel this[short x, short y]
+    public Pixel this[int x, int y]
         => _buffer[x + Width * y];
 
     // PRIVATE Members
     private Pixel[] _buffer;
 
-    public GraphicBuffer(short baseWidth, short baseHeight)
+    public GraphicBuffer(int baseWidth, int baseHeight)
     {
         Width = baseWidth;
         Height = baseHeight;
@@ -37,7 +38,7 @@ public class GraphicBuffer : IRenderable
         Fill(Pixel.Invisible);
     }
 
-    public GraphicBuffer(short baseWidth, params Pixel[] buffer)
+    public GraphicBuffer(int baseWidth, params Pixel[] buffer)
     {
         if (buffer == null)
             throw new ArgumentNullException();
@@ -45,14 +46,14 @@ public class GraphicBuffer : IRenderable
         if (buffer.Length % baseWidth != 0)
             throw new ArgumentException($"The buffer passed as an argument was not a rectangle (last row was shorter than other rows). Make sure you input the correct ${nameof(baseWidth)}", nameof(buffer));
 
-        short baseHeight = (short)(buffer.Length / baseWidth);
+        int baseHeight = (int)(buffer.Length / baseWidth);
 
         Width = baseWidth;
         Height = baseHeight;
 
         _buffer = buffer;
     }
-    public GraphicBuffer(short baseWidth, short baseHeight, params Pixel[] buffer)
+    public GraphicBuffer(int baseWidth, int baseHeight, params Pixel[] buffer)
     {
         if (buffer == null)
             throw new ArgumentNullException();
@@ -73,15 +74,15 @@ public class GraphicBuffer : IRenderable
         if (buffer.Length % screenArea.Width != 0)
             throw new ArgumentException($"The buffer passed as an argument was not a rectangle (last row was shorter than other rows). Make sure you input the correct ${screenArea.Width}", nameof(buffer));
 
-        Width = (short)screenArea.Width;
-        Height = (short)screenArea.Height;
+        Width = (int)screenArea.Width;
+        Height = (int)screenArea.Height;
 
         _buffer = buffer;
     }
     public GraphicBuffer(Rectangle screenArea)
     {
-        Width = (short)screenArea.Width;
-        Height = (short)screenArea.Height;
+        Width = (int)screenArea.Width;
+        Height = (int)screenArea.Height;
 
         Position = new Point(screenArea.Left, screenArea.Top);
 
@@ -284,6 +285,14 @@ public class GraphicBuffer : IRenderable
 
     public void Fill(Pixel pixel)
     {
+        for (int i = 0; i < _buffer.Length; i++)
+            _buffer[i] = pixel;
+    }
+
+    public void Fill(Color background)
+    {
+        Pixel pixel = new Pixel().WithBackground(background);
+
         for (int i = 0; i < _buffer.Length; i++)
             _buffer[i] = pixel;
     }

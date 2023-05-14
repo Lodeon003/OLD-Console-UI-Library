@@ -26,6 +26,9 @@ public abstract class Driver : IDisposable
 
     private static readonly object _lock = new object();
 
+    public bool AllowOutOfBounds { get; set; } = true;
+    public bool AllowTransparentColors { get; set; } = false;
+
     public abstract int ScreenWidth { get; }
     public abstract int ScreenHeight { get; }
     protected bool Disposed { get; private set; } = false;
@@ -130,13 +133,15 @@ public abstract class Driver : IDisposable
     /// <param name="sourceArea">The area of the buffer array to draw.
     /// you can exclude a part of the buffer if you don't need to display the whole graphic</param>
     /// <param name="destinationPosition">The element's top-left coordinate on the screen</param>
-    public void Display(ReadOnlySpan<Pixel> buffer, Rectangle sourceArea, Point destinationPosition)
+    public void Display(ReadOnlySpan<Pixel> buffer, Rectangle sourceArea, PixelPoint destinationPosition)
     {
         if (Disposed)
             throw new ObjectDisposedException(this.GetType().FullName);
 
         lock (_lock)
         {
+            sourceArea = sourceArea.Clamp(new(0, 0, ScreenWidth, ScreenHeight));
+            destinationPosition = PixelPoint.Clamp(destinationPosition, new(0, 0), new(ScreenWidth, ScreenHeight));
             OnDisplay(buffer, sourceArea, destinationPosition);
         }
     }
@@ -146,7 +151,7 @@ public abstract class Driver : IDisposable
     /// Displays a row of characters starting from a certain point on the screen
     /// </summary>
     /// <param name="characters"></param>
-    public void Display(Span<char> characters, Point destinationPosition)
+    public void Display(ReadOnlySpan<char> characters, Point destinationPosition)
     {
         if (Disposed)
             throw new ObjectDisposedException(this.GetType().FullName);
@@ -266,5 +271,22 @@ public abstract class Driver : IDisposable
     /// Callback raised when <see cref="Dispose"/> method gets called on this object and it hasn't been desposed yet
     /// </summary>
     protected abstract void OnDispose();
+
+
+    // [!] Make thread safe
+    protected void InvokeKeyboardInput(ConsoleKeyInfo keyInfo)
+    {
+        _lastKey = keyInfo;
+        _semaphore.Release();
+    }
+
+    public ConsoleKeyInfo GetKeyDown()
+    {
+        _semaphore.Wait();
+        return _lastKey;
+    }
+
+    private ConsoleKeyInfo _lastKey;
+    private SemaphoreSlim _semaphore = new SemaphoreSlim(0);
     #endregion
 }

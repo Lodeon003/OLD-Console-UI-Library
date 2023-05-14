@@ -60,8 +60,6 @@ public sealed class AnsiDriver : Driver
         }
     }
 
-    public bool AllowOutOfBounds { get; set; } = true;
-    public bool AllowTransparentColors { get; set; } = false;
     public override int ScreenWidth => _screenWidth;
     public override int ScreenHeight => _screenHeight;
     public byte ColorSimilarityThreshold { get; private init; }
@@ -114,13 +112,11 @@ public sealed class AnsiDriver : Driver
     {
         while(true)
         {
-            ConsoleKeyInfo keyInfo = Console.ReadKey();
+            ConsoleKeyInfo keyInfo = Console.ReadKey(true);
             
-            Task.Run(() =>
-            {
-                KeyboardInputDown?.Invoke(keyInfo);
-                KeyboardInputUp?.Invoke(keyInfo);
-            });
+            InvokeKeyboardInput(keyInfo);
+            KeyboardInputDown?.Invoke(keyInfo);
+            KeyboardInputUp?.Invoke(keyInfo);
         }
     }
 
@@ -258,7 +254,7 @@ public sealed class AnsiDriver : Driver
                 Pixel current = buffer[x + sourceArea.Width * y];
 
                 // Throw if semi-transparent pixels are to be printed (semi-transparent colors should be handled by user)
-                if (!AllowTransparentColors && (current.Foreground.IsTransparent || current.Background.IsTransparent))
+                if (!AllowTransparentColors && (current.Foreground.IsSemiTransparent || current.Background.IsSemiTransparent))
                     throw new NotImplementedException("Make sure to blend semi-transparent colors with console background");
 
                 // Change foreground color if different from last pixel

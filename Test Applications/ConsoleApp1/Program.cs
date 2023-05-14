@@ -21,6 +21,8 @@ using System.Runtime.InteropServices;
     [_] Make sure page and program methods are not exposed. Create navigator class that allows elements and pages to notify program when to change pages.
         . OnNavigate<TValue>(), Next(), Previous(), Navigate(TKey), Navigate(Value), Values.
  
+    [#] In Driver.cs implement system to clamp values and colors if 'AllowOutOfBounds' and 'AllowTransparentColors' and throw exceptions if not
+
     [#] Add OnFocus and OnLostFocus events for elements. Add method Unfocus() on elements class
 
     [#] Fix layout element Update method as having all children update in the "Update method" of one of them is bad idea.

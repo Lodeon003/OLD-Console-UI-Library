@@ -8,7 +8,7 @@ using Lodeon.Terminal.Graphics.Drivers;
 /// Base class for graphic drivers. A graphic driver is used by the library as an interface to display graphics. <br/>
 /// Default drivers for the <see cref="Console"/> are present in this library. This class can be extended to redirect graphic output to
 /// another source.<br/>
-/// This class implements a static lock to make sure that only one instance of <see cref="Driver"/> at the time can call <see cref="Display(System.ReadOnlySpan{Lodeon.Terminal.Pixel}, System.Drawing.Rectangle, System.Drawing.Point)"/>
+/// All methods and callbacks are thread safe via LOCK implementation. Lock is static, only ONE instance of theese classes can write to the console at once
 /// </summary>
 public abstract class Driver : IDisposable
 {
@@ -23,7 +23,8 @@ public abstract class Driver : IDisposable
     public abstract event MouseInputDel? MouseInputDown;
     public abstract event MouseInputDel? MouseInputUp;
 
-    private static object _lock = new object();
+    private static readonly object _lock = new object();
+
     public abstract int ScreenWidth { get; }
     public abstract int ScreenHeight { get; }
     protected bool Disposed { get; private set; } = false;
@@ -132,26 +133,65 @@ public abstract class Driver : IDisposable
             OnDisplay(characters, destinationPosition);
         }
     }
+    
+    /// <summary>
+    /// IDisposable implementation. Call to release all unmanaged resources
+    /// </summary>
     public void Dispose()
     {
         if (Disposed)
             return;
 
-        OnDispose();
-
-        Disposed = true;
+        lock (_lock)
+        {
+            OnDispose();
+            Disposed = true;
+        }
     }
 
+    /// <summary>
+    /// Implementation: show specified data to the console screen
+    /// </summary>
+    /// <param name="buffer">Memory representing an array of <see cref="Pixel"/>s to display</param>
+    /// <param name="sourceArea">The area of the array where to take pixels from</param>
+    /// <param name="destinationPosition">Where to display the array on screen</param>
     protected abstract void OnDisplay(ReadOnlySpan<Pixel> buffer, Rectangle sourceArea, Point destinationPosition);
+    
+    /// <summary>
+    /// Implementation: display specified text on screen at specified destination
+    /// </summary>
     protected abstract void OnDisplay(ReadOnlySpan<char> buffer, Point destinationPosition);
 
     /// <summary>
     /// Clears the console buffer
     /// </summary>
-    public abstract void Clear();
+    public void Clear()
+    {
+        lock(_lock)
+        {
+            OnClear();
+        }
+    }
+    /// <summary>
+    /// 
+    /// </summary>
+    protected abstract void OnClear();
+
+    /// <summary>
+    /// Clears the console buffer and changes the background color of the whole buffer
+    /// </summary>
+    public abstract void Clear(Color background);
+    /// <summary>
+    /// Callback raised when <see cref="Dispose"/> method gets called on this object and it hasn't been desposed yet
+    /// </summary>
     protected abstract void OnDispose();
 
-    internal static Driver GetDefaultDriver()
+    /// <summary>
+    /// Returns a driver that bests fits the current operating system
+    /// </summary>
+    /// <returns>An instance of a Driver class</returns>
+    /// <exception cref="DriverException"/>
+    public static Driver GetDefaultDriver()
     {
         if(OperatingSystem.IsWindows())
         {
@@ -160,6 +200,31 @@ public abstract class Driver : IDisposable
         return new AnsiDriver();
     }
 
-    public abstract void SetBackground(Color background);
-    public abstract void SetForeground(Color foreground);
+
+    // Added to change color to Display(Span<char>) method
+    /// <summary>
+    /// Set background color of the console's cursor
+    /// </summary>
+    /// <param name="background">The color to set</param>
+    public void SetBackground(Color background)
+    {
+        lock(_lock)
+        {
+            OnSetBackground(background);
+        }
+    }
+    protected abstract void OnSetBackground(Color background);
+
+    /// <summary>
+    /// Set foreground color of the console's cursor
+    /// </summary>
+    /// <param name="foreground">The color to set</param>
+    public void SetForeground(Color foreground)
+    {
+        lock(_lock)
+        {
+            OnSetForeground(foreground);
+        }
+    }
+    public abstract void OnSetForeground(Color foreground);
 }

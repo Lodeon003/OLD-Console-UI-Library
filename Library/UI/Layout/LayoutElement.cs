@@ -233,7 +233,7 @@ public abstract class LayoutElement : Element
         // Impelent struct algorithm
         PixelPoint position = PositionKind switch
         {
-            LayoutPosition.Stack => parentStack.Add(size),
+            LayoutPosition.Stack => parentStack.Add(size, margin),
             LayoutPosition.Absolute => PixelPoint.Clamp(PixelPoint.FromPoint(Position, contentSize), MinPosition, MaxPosition),
             _ => throw new NotImplementedException($"Only {LayoutPosition.Stack} and {LayoutPosition.Absolute} have been defined")
         };
@@ -292,7 +292,7 @@ public abstract class LayoutElement : Element
             elements = parent._children;
         }
 
-        LayoutStack parentStack = new LayoutStack(parentLayout.Position, parentLayout.ContentArea.RectSize);
+        LayoutStack parentStack = new LayoutStack(parentLayout.Position, parentLayout.ContentArea.RectSize, LayoutStack.HorizontalAlign.Left, LayoutStack.VerticalAlign.Top);
         
         // Calculate this element's layout (and siblings' layout if there are)
         for (int i = 0; i < elements.Length; i++)

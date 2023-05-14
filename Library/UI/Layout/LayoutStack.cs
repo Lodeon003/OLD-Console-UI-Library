@@ -25,7 +25,7 @@ public ref struct LayoutStack
     private HorizontalAlign _horiziontal;
     private VerticalAlign _vertical;
 
-    internal LayoutStack(PixelPoint position, PixelPoint size, HorizontalAlign horizontalAlign, VerticalAlign verticalAlign)
+    public LayoutStack(PixelPoint position, PixelPoint size, HorizontalAlign horizontalAlign, VerticalAlign verticalAlign)
     {
         _position = position;
         _size = size;
@@ -55,7 +55,7 @@ public ref struct LayoutStack
     /// <param name="size">The size in pixels of the element to add</param>
     /// <param name="margin">The margin in pixel of the element to add</param>
     /// <returns></returns>
-    internal PixelPoint Add(PixelPoint size, Pixel4 margin)
+    public PixelPoint Add(PixelPoint size, Pixel4 margin)
     {
         // Add initial margin
         if(_horiziontal == HorizontalAlign.Left)

@@ -41,7 +41,7 @@
             }
         }
 
-        public voif Iterate(Action<T2> code)
+        public void Iterate(Action<T2> code)
         {
            lock(_lock)
            {

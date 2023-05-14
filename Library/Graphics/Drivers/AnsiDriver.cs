@@ -72,7 +72,7 @@ public class AnsiDriver : Driver
     /// - An exception will be thrown if this is a windows process and can't enable "ENABLE_VIRTUAL_TERMINAL_PROCESSING"
     /// and "ENABLE_PROCESSED_OUTPUT" via "SetConsoleMode" in "Kernel32"
     /// </summary>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="DriverException"></exception>
     public AnsiDriver(byte colorSimilarityThreshold = 0) : base()
     {
         ColorSimilarityThreshold = colorSimilarityThreshold;
@@ -90,7 +90,7 @@ public class AnsiDriver : Driver
                 && WindowsNative.SetConsoleMode(stdOutHandle, outConsoleMode | WindowsNative.ENABLE_PROCESSED_OUTPUT | WindowsNative.ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 
             if (!enabled)
-                throw new InvalidOperationException("Couldn't enable terminal graphics on this windows version");
+                throw new DriverException("Couldn't enable terminal graphics on this windows version");
         }
     }
 
@@ -192,20 +192,17 @@ public class AnsiDriver : Driver
         Console.Out.Write(outSpan);
     }
 
-    public override void Clear()
+    public override void OnClear()
         => Console.Clear();
 
     /// <summary>
     /// Clears the console buffer and changes the background color of the whole buffer
     /// </summary>
     /// <param name="background"></param>
-    public void Clear(Color background)
+    protected override void OnClear(Color background)
     {
-        Pixel pixel = new Pixel().WithBackground(background);
-
-        SetBackground(background);
-
-        int length = Console.BufferWidth * Console.BufferHeight;
+        UpdateWindowSize();
+        int length = Console.WindowWidth * Console.WindowHeight;
 
         Span<char> sp = ArrayPool<char>.Shared.Rent(length).AsSpan();
         sp = sp.Slice(0, length);
@@ -213,10 +210,22 @@ public class AnsiDriver : Driver
         for (int i = 0; i < length; i++)
             sp[i] = ' ';
 
+        OnSetBackground(background);
         Display(sp, Point.Empty);
+        InvokeWindowIfResize();
     }
 
-    public override void SetBackground(Color background)
+    private void UpdateWindowSize()
+    {
+
+    }
+
+    private void InvokeWindowIfResize()
+    {
+
+    }
+
+    protected override void OnSetBackground(Color background)
     {
         Pixel pixel = new Pixel().WithBackground(background);
 
@@ -224,7 +233,7 @@ public class AnsiDriver : Driver
         Display(span, new Rectangle(0, 0, 1, 1), Point.Empty);
     }
 
-    public override void SetForeground(Color foreground)
+    protected override void OnSetForeground(Color foreground)
     {
         Pixel pixel = new Pixel().WithForeground(foreground);
 
@@ -302,8 +311,12 @@ public class AnsiDriver : Driver
 
     protected override void OnDisplay(ReadOnlySpan<char> buffer, Point destinationPosition)
     {
-        throw new NotImplementedException();
+        Console.SetCursorPosition(destinationPosition.X, destinationPosition.Y);
+        Console.Out.Write(buffer);
     }
 
-    protected override void OnDispose() {}
+    protected override void OnDispose()
+    {
+        _disposeToken?.Dispose();
+    }
 }

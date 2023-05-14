@@ -12,6 +12,10 @@ public class WindowsDriver : Driver
 {
     private IntPtr _outHandle;
 
+    /// <summary>
+    /// Returns a new instance of a driver that works via windows low-level function calls
+    /// </summary>
+    /// <exception cref="DriverException"></exception>
     public WindowsDriver()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -21,7 +25,7 @@ public class WindowsDriver : Driver
                 && WindowsNative.SetConsoleMode(stdOutHandle, outConsoleMode | WindowsNative.ENABLE_PROCESSED_OUTPUT | WindowsNative.ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 
             if (!enabled)
-                throw new InvalidOperationException("Couldn't enable terminal graphics on this windows version");
+                throw new DriverException("Couldn't enable terminal graphics on this windows version");
 
             _outHandle = stdOutHandle;
         }
@@ -42,12 +46,17 @@ public class WindowsDriver : Driver
         throw new NotImplementedException();
     }
 
-    public override void SetBackground(Color background)
+    public override void Clear(Color background)
     {
         throw new NotImplementedException();
     }
 
-    public override void SetForeground(Color foreground)
+    public override void OnSetBackground(Color background)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void OnSetForeground(Color foreground)
     {
         throw new NotImplementedException();
     }

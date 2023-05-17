@@ -1,7 +1,6 @@
 ﻿using Lodeon.Terminal.UI.Units;
-using System.Buffers;
-using System.Runtime.InteropServices;
-
+using System.Diagnostics;
+using Lodeon.Terminal;
 namespace Lodeon.Terminal.UI.Layout;
 
 public ref struct LayoutStackBackup
@@ -48,17 +47,27 @@ public ref struct LayoutStackBackup
         _horizontal = horizontalAlign;
     }
 
+    public void SetPosition(int x, int y)
+    {
+        _position = new PixelPoint(x, y);
+    }
+
+    public void SetSize(int x, int y)
+    {
+        _size = new PixelPoint(x, y);
+    }
+
     public void Calculate(Span<PixelLayout> layouts, Span<PixelPoint> positions)
     {
         _currentX = _position.X;
         _currentY = _position.Y;
 
-        int totalSizeX = 0, totalSizeY = 0;
+        int childrenSizeX = 0, childrenSizeY = 0;
 
         for (int i = 0; i < layouts.Length; i++)
         {
-            totalSizeX += layouts[i].Size.X + layouts[i].Margin.Size.X;
-            totalSizeY += layouts[i].Size.Y + layouts[i].Margin.Size.Y;
+            childrenSizeX += layouts[i].Size.X + layouts[i].Margin.Size.X;
+            childrenSizeY += layouts[i].Size.Y + layouts[i].Margin.Size.Y;
 
             int x = _currentX + layouts[i].Margin.Left;
             int y = _currentY + layouts[i].Margin.Top;
@@ -74,136 +83,45 @@ public ref struct LayoutStackBackup
             _currentY += layouts[i].Size.Y + layouts[i].Margin.Bottom;
         }
 
-        for(int i = 0; i < positions.Length; i++)
+        //childrenSizeX = Math.Clamp(childrenSizeX, 0, this._size.X);
+        //childrenSizeY = Math.Clamp(childrenSizeY, 0, this._size.Y);
+
+        for (int i = 0; i < positions.Length; i++)
         {
-            int sizeX = _orientation == Orientation.Horizontal ? totalSizeX : positions[i].X;
-            int sizeY = _orientation == Orientation.Vertical ? totalSizeY : positions[i].Y;
-
-            int offset = 0;
-            switch (_horizontal)
-            {
-                case HorizontalAlign.Left:
-                    break;
-
-                case HorizontalAlign.Center:
-                    offset = (_size.X - sizeX) / 2;
-                    positions[i] = new(positions[i].X + offset, positions[i].Y);
-                    break;
-
-                case HorizontalAlign.Right:
-                    offset = _size.X - sizeX;
-                    positions[i] = new(positions[i].X + offset, positions[i].Y);
-                    break;
-            }
-
-            switch (_vertical)
-            {
-                case VerticalAlign.Top:
-                    break;
-
-                case VerticalAlign.Center:
-                    offset = (_size.Y - sizeY) / 2;
-                    positions[i] = new(positions[i].X, positions[i].Y + offset);
-                    break;
-
-                case VerticalAlign.Bottom:
-                    offset = _size.Y - sizeY;
-                    positions[i] = new(positions[i].X, positions[i].Y + offset);
-                    break;
-            }
-        }
-    }
-    private int UpdateX(PixelPoint size, Pixel4 margin)
-    {
-        int result = 0;
-
-        // If left or center (center is treated as left but with added offset)
-        if (_horizontal != HorizontalAlign.Right)
-        {
-            _currentX += margin.Left;
-
-            if (_horizontal == HorizontalAlign.Center && _orientation == Orientation.Vertical)
-                _currentX += (_size.X / 2 - size.X / 2);
-
-            result = _currentX;
-
-            if (_horizontal == HorizontalAlign.Center && _orientation == Orientation.Vertical)
-                _currentX += (_size.X / 2 - size.X / 2);
+            int offsetX = 0, offsetY = 0;
+            PixelPoint wholeSize = layouts[i].Size + layouts[i].Margin.Size;
 
             if (_orientation == Orientation.Horizontal)
             {
-                _currentX += size.X;
-                _currentX += margin.Right;
+                if(_horizontal == HorizontalAlign.Center)
+                    offsetX = (this._size.X - childrenSizeX);
+                
+                else if (_horizontal == HorizontalAlign.Right)
+                    offsetX = (this._size.X - childrenSizeX) * 2;
+
+                if (_vertical == VerticalAlign.Center)
+                    offsetY = (this._size.Y - wholeSize.Y) / 2;
+
+                else if (_vertical == VerticalAlign.Bottom)
+                    offsetY = (this._size.Y - wholeSize.Y);
             }
             else
             {
-                _currentX -= margin.Left;
+                if (_horizontal == HorizontalAlign.Center)
+                    offsetX = (this._size.X - wholeSize.X) / 2;
+
+                else if (_horizontal == HorizontalAlign.Right)
+                    offsetX = (this._size.X - wholeSize.X);
+
+                if (_vertical == VerticalAlign.Center)
+                    offsetY = (this._size.Y - childrenSizeY);
+
+                else if (_vertical == VerticalAlign.Bottom)
+                    offsetY = (this._size.Y - childrenSizeY) * 2;
             }
-            
-            return result;
+
+            Debugger.Log($"Whole Position: {this._position}\nWhole size: {this._size}\nChildren size: {childrenSizeX};{childrenSizeY}\nThat position: {positions[i]}\nThat size: {wholeSize}\nOffset: {offsetX},{offsetY}");
+            positions[i] = new(positions[i].X + offsetX, positions[i].Y + offsetY);
         }
-        
-
-        // If RIGHT
-        _currentX -= margin.Right;
-        _currentX -= size.X;
-        result = _currentX;
-
-        if (_orientation == Orientation.Horizontal)
-        {
-            _currentX -= margin.Left;
-        }
-        else
-        {
-            _currentX += margin.Right;
-            _currentX += size.X;
-        }
-
-        return result;
-    }
-    private int UpdateY(PixelPoint size, Pixel4 margin)
-    {
-        int result = 0;
-        if (_vertical != VerticalAlign.Bottom)
-        {
-            _currentY += margin.Top;
-
-            if (_vertical == VerticalAlign.Center)
-                _currentY += (_size.Y / 2 - size.Y / 2);
-
-            result = _currentY;
-
-            if (_vertical == VerticalAlign.Center)
-                _currentY -= (_size.Y / 2 - size.Y / 2);
-
-            if (_orientation == Orientation.Vertical)
-            {
-                _currentY += size.Y;
-                _currentY += margin.Bottom;
-            }
-            else
-            {
-                _currentY -= margin.Top;
-            }
-            
-            return result;
-        }
-       
-        // IF BOTTOM
-        _currentY -= margin.Bottom;
-        _currentY -= size.Y;
-        result = _currentY;
-
-        if (_orientation == Orientation.Vertical)
-        {
-            _currentY -= margin.Top;
-        }
-        else
-        {
-            _currentY += size.Y;
-            _currentY += margin.Bottom;
-        }
-
-        return result;
     }
 }

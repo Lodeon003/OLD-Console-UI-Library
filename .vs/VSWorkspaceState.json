@@ -1,6 +1,11 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\Library",
+    "\\Library\\UI",
+    "\\Test Applications",
+    "\\Test Applications\\ConsoleApp1"
   ],
+  "SelectedNode": "\\ANSI GUI Library.sln",
   "PreviewInSolutionExplorer": false
 }

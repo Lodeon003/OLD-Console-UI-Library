@@ -33,11 +33,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Gaming\\source\\repos\\Console-UI-Library\\Test Applications\\ConsoleApp1\\Test Application.csproj",
+      "projectUniqueName": "C:\\Users\\Gaming\\Source\\Repos\\Lodeon003\\Console-UI-Library\\Test Applications\\ConsoleApp1\\Test Application.csproj",
       "projectName": "Test Application",
-      "projectPath": "C:\\Users\\Gaming\\source\\repos\\Console-UI-Library\\Test Applications\\ConsoleApp1\\Test Application.csproj",
+      "projectPath": "C:\\Users\\Gaming\\Source\\Repos\\Lodeon003\\Console-UI-Library\\Test Applications\\ConsoleApp1\\Test Application.csproj",
       "packagesPath": "C:\\Users\\Gaming\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Gaming\\Source\\Repos\\Console-UI-Library\\Test Applications\\ConsoleApp1\\obj\\",
+      "outputPath": "C:\\Users\\Gaming\\Source\\Repos\\Lodeon003\\Console-UI-Library\\Test Applications\\ConsoleApp1\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -59,8 +59,8 @@
         "net6.0": {
           "targetAlias": "net6.0",
           "projectReferences": {
-            "C:\\Users\\Gaming\\source\\repos\\Console-UI-Library\\Library\\ANSI GUI Library.csproj": {
-              "projectPath": "C:\\Users\\Gaming\\source\\repos\\Console-UI-Library\\Library\\ANSI GUI Library.csproj"
+            "C:\\Users\\Gaming\\Source\\Repos\\Lodeon003\\Console-UI-Library\\Library\\ANSI GUI Library.csproj": {
+              "projectPath": "C:\\Users\\Gaming\\Source\\Repos\\Lodeon003\\Console-UI-Library\\Library\\ANSI GUI Library.csproj"
             }
           }
         }

@@ -5,30 +5,30 @@ namespace Lodeon.Terminal.UI;
 
 // Fai di salvare tutto con le interfacce ma controllando che solo valori che derivano da T vengano inseriti. Converti all'uscita T
 
-public class TreeNavigator<NavigableT> where NavigableT : INavigable<NavigableT>
+public class TreeNavigator<T> where T : INavigable<T>
 {
-    public TreeNavigator(NavigableT root)
+    private TreeNavigator(T root)
     {
-        if (root is not INavigableContainer<NavigableT>)
+        if (root is not INavigableContainer<T>)
             throw new ArgumentException("Element was not a container");
 
         SetContainer(root);
     }
 
-    public delegate void GenericDel(NavigableT element);
-    public delegate void GenericNullableDel(NavigableT? element);
+    public delegate void GenericDel(T element);
+    public delegate void GenericNullableDel(T? element);
     public delegate void ContainerDel<T>(T element);
 
-    public event ContainerDel<NavigableT>? OnTreeChangedFrom;
-    public event ContainerDel<NavigableT>? OnTreeChangedTo;
+    public event ContainerDel<T>? OnTreeChangedFrom;
+    public event ContainerDel<T>? OnTreeChangedTo;
     public event GenericNullableDel? OnNavigateFrom;
     public event GenericDel? OnNavigateTo;
     public event GenericDel? OnSelect;
     public event GenericDel? OnDeselect;
 
     private object _lock = new object();
-    private NavigableT _currentContainer;
-    private NavigableT[] _elements;
+    private T _currentContainer;
+    private T[] _elements;
     private int _currentIndex;
     private int _selectedIndex;
     private bool _isElementSelected = false;
@@ -59,10 +59,10 @@ public class TreeNavigator<NavigableT> where NavigableT : INavigable<NavigableT>
 
     public bool NavigateIn()
     {
-        NavigableT currentElement = _elements[_currentIndex];
+        T currentElement = _elements[_currentIndex];
 
         // If it is a container set it as current container
-        if(currentElement is INavigableContainer<NavigableT>)
+        if(currentElement is INavigableContainer<T>)
             return SetContainer(currentElement);
 
         return Select(_currentIndex);
@@ -75,25 +75,25 @@ public class TreeNavigator<NavigableT> where NavigableT : INavigable<NavigableT>
             return true;
 
         // If no element is selected try to move out to parent
-        INavigableContainer<NavigableT>? parent = _currentContainer.GetParent();
+        INavigableContainer<T>? parent = _currentContainer.GetParent();
 
         if (parent == null)
             return false;
 
         // If it is a container set it as current container
-        if (parent is INavigableContainer<NavigableT>)
-            return SetContainer(parent);
+        if (parent is INavigableContainer<T>)
+            return SetContainer((T)parent);
 
         // [!] Parent of current element might not be a container. GetParent() returns 'NavigableT' and not 'INavigableContainer'.
         return Deselect();
     }
 
-    public bool SetContainer(NavigableT element) // Fai si di poter navigare a qualunque elemento. Se è un container imposta i figli, // altrimenti "selezionalo". Quando viene cambiato parent dovrebbe venir chiamato l'evento, OnNavigate sul primo figlio (per updatare le UI)
+    public bool SetContainer(T element) // Fai si di poter navigare a qualunque elemento. Se è un container imposta i figli, // altrimenti "selezionalo". Quando viene cambiato parent dovrebbe venir chiamato l'evento, OnNavigate sul primo figlio (per updatare le UI)
     {
         lock(_lock)
         {
             // Check if container is valid container
-            if (element == null || element is not INavigableContainer<NavigableT> asContainer)
+            if (element == null || element is not INavigableContainer<T> asContainer)
                 return false;
             
             if (element == null)
@@ -105,8 +105,8 @@ public class TreeNavigator<NavigableT> where NavigableT : INavigable<NavigableT>
 
             _elements = asContainer.GetChildren();
 
-            NavigableT lastContainer = _currentContainer;
-            NavigableT newContainer = element;
+            T lastContainer = _currentContainer;
+            T newContainer = element;
 
             OnTreeChangedFrom?.Invoke(lastContainer);
             OnTreeChangedTo?.Invoke(newContainer);
@@ -154,8 +154,8 @@ public class TreeNavigator<NavigableT> where NavigableT : INavigable<NavigableT>
             if (TryDeselect())
                 return false;
 
-            NavigableT lastElement = _elements[_currentIndex];
-            NavigableT currentElement = _elements[index];
+            T lastElement = _elements[_currentIndex];
+            T currentElement = _elements[index];
             
             _currentIndex = index;
 

@@ -28,7 +28,13 @@ using System.Runtime.InteropServices;
     [#] Change the element's "OnDraw" function with other events and make the "Canvas" property visible to subclasses so it can be drawn when needed
         . Need to define a method to actually display what was drawn on the canvas
 
-    [#] Decide how to go about focusing policy
+    [#] Decide how to go about focusing policy. Make it so elements can be hovered or focused. If no element is focused you can use arrow keys to hover on element's which have 'IsFocusable' true (if can't focus no point in hovering it so just skip it)
+        . You start from the page container which will let you hover it's children. If you hover on a container and press ENTER you will hover it's children. If you press ENTER on a non-container you will focus
+        . that item and interact with it. If you press ESC while focusing an item you lose focus and hover it's container children. If you press ESC while hovering a container's content you will go back and hover it's parent's children
+        . Add a 'PassThrough' property for containers that specify whether it's children are focusable or not. If 'true' it will behave as a container. It's children will be hovered and focused.
+        . If 'false' it will behave like a normal element. The whole element will be hovered and it may be focused if 'IsFocusable' is true.
+        . Make it so input is first handled by the script, then page, then elements. This way navigation will be handled on a Page level.
+        . <should TreeNavigator be accessible to all elements?>
 
     [#] In Driver.cs implement system to clamp values and colors if 'AllowOutOfBounds' and 'AllowTransparentColors' and throw exceptions if not
 

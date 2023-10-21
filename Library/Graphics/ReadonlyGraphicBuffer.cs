@@ -2,7 +2,7 @@
 
 namespace Lodeon.Terminal.Graphics
 {
-    public class ReadonlyGraphicBuffer : IRenderable
+    public class ReadonlyGraphicBuffer
     {
         private GraphicBuffer _buffer;
 
@@ -22,8 +22,5 @@ namespace Lodeon.Terminal.Graphics
 
         public ReadOnlySpan<Pixel> GetGraphics()
             => _buffer.GetGraphics();
-
-        public Rectangle GetScreenArea()
-            => _buffer.GetScreenArea();
     }
 }

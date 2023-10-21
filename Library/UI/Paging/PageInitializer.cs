@@ -9,7 +9,6 @@ namespace Lodeon.Terminal.UI.Paging;
 public class PageInitializer
 {
     private readonly Dictionary<string, Page> _dictionary;
-    private readonly Driver _driver;
     private Page? _mainPage;
     private GraphicBuffer _screenBuffer;
     private Script _program;
@@ -18,10 +17,9 @@ public class PageInitializer
 
     public Page Main => _mainPage ?? throw new ArgumentException($"No page was initialized as main. ONe must be initialized using {nameof(AddMain)} method");
 
-    public PageInitializer(Dictionary<string, Page> dictionary, Navigator<string, Page> navigator, Driver driver, GraphicBuffer screenBuffer, Script program, ExceptionHandler handler)
+    public PageInitializer(Dictionary<string, Page> dictionary, Navigator<string, Page> navigator, GraphicBuffer screenBuffer, Script program, ExceptionHandler handler)
     {
         _dictionary = dictionary;
-        _driver = driver;
         _screenBuffer = screenBuffer;
         _program = program;
         _handler = handler;
@@ -43,7 +41,7 @@ public class PageInitializer
         else
             throw new ArgumentException("More than one page was set as Main page", nameof(isMain));
 
-        page.Initialize(_program, _driver, isMain, _screenBuffer, _handler, _navigator);
+        page.Initialize(_program, isMain, _screenBuffer, _handler, _navigator);
 
         if (!_dictionary.TryAdd(name, page))
             throw new ArgumentException($"More than one page have the same name: \"{name}\"", nameof(name));

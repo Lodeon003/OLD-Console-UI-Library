@@ -18,7 +18,7 @@ public abstract class Page : ITransform
         throw new NotImplementedException();
     }
 
-    private Script Script { get { if (_script is null) throw new ArgumentNullException(nameof(Out), "Element was not initialized"); return _script; } }
+    private Script Script { get { if (_script is null) throw new ArgumentNullException(nameof(Script), "Element was not initialized"); return _script; } }
     private Script? _script;
 
     protected Navigator<string, Page> Navigator { get { if (_navigator is null) throw new ArgumentNullException(nameof(Navigator), "Element was not initialized"); return _navigator; } }
@@ -27,14 +27,12 @@ public abstract class Page : ITransform
     protected ExceptionHandler ExceptionHandler { get { if (_exceptionHandler is null) throw new ArgumentNullException(nameof(ExceptionHandler), "Element was not initialized"); return _exceptionHandler; } }
     private ExceptionHandler? _exceptionHandler;
 
-    private Driver Out { get { if (_driver is null) throw new ArgumentNullException(nameof(Out), "Element was not initialized"); return _driver; } }
-    private Driver? _driver;
-
     protected GraphicBuffer ProgramBuffer { get { if (_programBuffer is null) throw new ArgumentNullException(nameof(ProgramBuffer), "Element was not initialized"); return _programBuffer; } }
     private GraphicBuffer? _programBuffer;
 
-    protected RootElement Root { get { if (_root is null) throw new ArgumentNullException(nameof(RootElement), "Element was not initialized"); return _root; } }
-    private RootElement? _root;
+    //protected RootElement Root { get { if (_root is null) throw new ArgumentNullException(nameof(RootElement), "Element was not initialized"); return _root; } }
+    //private RootElement? _root;
+
     public event TransformChangedEvent PositionChanged;
     public event TransformChangedEvent SizeChanged;
 
@@ -45,9 +43,8 @@ public abstract class Page : ITransform
     /// with parameters
     /// </summary>
     /// <param name="isMain"></param>
-    internal void Initialize(Script program, Driver driver, bool isMain, GraphicBuffer programBuffer, ExceptionHandler handler, Navigator<string, Page> navigator)
+    internal void Initialize(Script program, bool isMain, GraphicBuffer programBuffer, ExceptionHandler handler, Navigator<string, Page> navigator)
     {
-        _driver = driver;
         IsMain = isMain;
         _programBuffer = programBuffer;
         _script = program;
@@ -61,12 +58,13 @@ public abstract class Page : ITransform
     private void Script_OnPageChanged(Page page)
     {
         // if page == this
-        // Call events
-        // Update all elements on screen
-        // start loop
+            // Enable all elements in page
+            // Send a resize event to redraw all screen
+            // Hook Script's input events
+            // start loop
         // else
-        // Call events
-        // Stop loop
+            // Disable all elements in page
+            // Unhook all script's input events
 
         // enable / disable input?
         throw new NotImplementedException();
@@ -74,30 +72,39 @@ public abstract class Page : ITransform
 
     internal void Display(IElement element)
     {
-        OverlayParent(element);
-        ProgramBuffer.Overlay(element.GetGraphics(), element.GetScreenArea());
-        OverlayChildren(element);
-        Out.Display(ProgramBuffer);
+        // Clear buffer
+        // Overlay all element's parents recursively
+        // Overlay all element's children recursively
+        // Call script function to draw buffer
+        
+        // NOTE: It is wrong to give pages the program's buffer, but it is better to only have one instead
+        // of many. Make it so only selected page can call buffer display. Maybe fire a 'DisplayRequest' event
+        // that the program will listen to
+
+        //ProgramBuffer.Overlay(element.GetGraphics(), element.GetScreenArea());
+        //OverlayChildren(element);
+        //Out.Display(ProgramBuffer.GetGraphics(), ProgramBuffer.GetArea(), new(0,0));
+        throw new NotImplementedException();
     }
 
-    private void OverlayChildren(IElement element)
-    {
-        ReadOnlySpan<IElement> children = element.GetChildren();
+    //private void OverlayChildren(IElement element)
+    //{
+    //    ReadOnlySpan<IElement> children = element.GetChildren();
+    //
+    //    for (int i = 0; i < children.Length; i++)
+    //    {
+    //        ProgramBuffer.Overlay(children[i].GetGraphics(), children[i].GetScreenArea());
+    //        OverlayChildren(children[i]);
+    //    }
+    //}
 
-        for (int i = 0; i < children.Length; i++)
-        {
-            ProgramBuffer.Overlay(children[i].GetGraphics(), children[i].GetScreenArea());
-            OverlayChildren(children[i]);
-        }
-    }
-
-    private void OverlayParent(IElement element)
-    {
-        if (element.Parent != null)
-            OverlayParent(element);
-
-        ProgramBuffer.Overlay(element.GetGraphics(), element.GetScreenArea());
-    }
+    //private void OverlayParent(IElement element)
+    //{
+    //    if (element.Parent != null)
+    //        OverlayParent(element);
+    //
+    //    ProgramBuffer.Overlay(element.GetGraphics(), element.GetScreenArea());
+    //}
 
     private void Script_OnExit()
     {

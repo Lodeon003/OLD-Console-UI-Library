@@ -60,7 +60,7 @@ public class Navigator<T1, T2> : Navigator where T1 : notnull where T2 : notnull
                     continue;
 
                 Task.Run(() => OnNavigate?.Invoke(element));
-                break;
+                return;
             }
 
             Task.Run(() => OnNavigateFail?.Invoke(ErrorCode.NotFoundByPredicate));

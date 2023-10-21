@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Text;
@@ -24,7 +25,7 @@ public interface IElement : ITransform, IRenderable
         public event ParentChangeHandler? ParentChanged;
 
         private IElement? _parent;
-        public IElement? Parent { get => _parent; set { IElement? oldParent = _parent; _parent = value; ParentChanged?.Invoke(oldParent, value); } };
+        public IElement? Parent { get => _parent; set { IElement? oldParent = _parent; _parent = value; ParentChanged?.Invoke(oldParent, value); } }
         
         public Page Page { get; init; } = default!;
         public Navigator<string, Page> Navigator { get; init; } = default!;
@@ -101,6 +102,6 @@ public abstract class Container<TContext> : Element<TContext>, IContainer where 
 
     private void UpdateLayout()
     {
-        Context.Layout
+        throw new NotImplementedException("Update children's position");
     }
 }

@@ -1,9 +1,5 @@
 ﻿using Lodeon.Terminal.UI;
-using Lodeon.Terminal.UI.Layout;
 using Lodeon.Terminal.UI.Paging;
-using System.Collections.Concurrent;
-using System.Collections.ObjectModel;
-using System.Runtime.InteropServices;
 
 /*  TODO:
 
@@ -66,10 +62,9 @@ using System.Runtime.InteropServices;
         . buffer size and position change>
  */
 
-return;
-RootElement root = LayoutElement.TreeFromXml("Square.xml", null, null, null);
-return;
-//await Script.Run<MyProgram>();
+//RootElement root = LayoutElement.TreeFromXml("Square.xml", null, null, null);
+//return;
+await Script.Run<MyProgram>();
 
 class MyProgram : Script
 {
@@ -84,15 +79,20 @@ class MyProgram : Script
     }
 }
 
-class MainPage : Lodeon.Terminal.UI.Layout.LayoutPage
+class MainPage : Page
 {
-    protected override void OnSelect()
+    public override void Popup(string title, string text)
     {
-        
+        throw new NotImplementedException();
     }
 
     protected override void OnDeselect()
     {
-        
+        throw new NotImplementedException();
+    }
+
+    protected override void OnSelect()
+    {
+        throw new NotImplementedException();
     }
 }

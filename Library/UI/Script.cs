@@ -1,8 +1,7 @@
 ﻿//using Lodeon.Terminal.UI.Layout;
-using Lodeon.Terminal.UI.Layout.Presets;
 using Lodeon.Terminal.UI.Navigation;
-using Lodeon.Terminal.UI.Page;
 using Lodeon.Terminal.UI.Paging;
+using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -46,7 +45,7 @@ public abstract class Script
         Dictionary<string, Page> pages = new Dictionary<string, Page>();
         _navigator = new Navigator<string, Page>(pages);
 
-        PageInitializer pageInit = new PageInitializer(pages, _navigator, _output, _outputBuffer, this, _exceptionHandler);
+        PageInitializer pageInit = new PageInitializer(pages, _navigator, _outputBuffer, this, _exceptionHandler);
         this.OnInitialize(pageInit);
 
         _exceptionHandler.Log(initialExceptions);
@@ -55,12 +54,19 @@ public abstract class Script
         _navigator.OnNavigateFail += PageNavigator_OnFail;
         _navigator.OnExit += PageNavigator_OnExit;
 
+        // [!] Non dovrebbe essere dopo?
         _executing.Set(true);
 
         // If errors occur invoke the OnInitializationFailed method
         if(_exceptionHandler.Exceptions.Count > 0)
         {
             this.OnInitializationFailed(_exceptionHandler.Exceptions);
+            return;
+        }
+
+        if(pages.Count <= 0)
+        {
+            this.OnInitializationFailed(new ReadOnlyCollection<Exception>(new Exception[] { new("No pages where added to this script.\n Try assigning them in the script's overridable method") }));
             return;
         }
 
@@ -76,6 +82,7 @@ public abstract class Script
                 throw new InvalidOperationException("Internal error, method was called before program was initialized");
         });
     }
+    
     private async Task Wait()
     {
         ThrowIfNotExecuting();
@@ -89,6 +96,7 @@ public abstract class Script
         }
         catch (OperationCanceledException) { }
     }
+    
     private void Exit()
     {
         if (_exitSource == null)
@@ -124,6 +132,7 @@ public abstract class Script
 
         _currentPage.Set(newPage);
         OnPageChanged?.Invoke(newPage);
+        throw new NotImplementedException("Enable elements.");
     }
     private void PageNavigator_OnExit()
         => Exit();
@@ -137,7 +146,10 @@ public abstract class Script
     private void ExceptionHandler_OnLog(Exception e)
     {
         ThrowIfNotExecuting();
-        _currentPage.Get().Popup("Error", e.Message);
+        Page? page = _currentPage.Get();
+
+        if(page != null)
+            page.Popup("Error", e.Message);
     }
 
 

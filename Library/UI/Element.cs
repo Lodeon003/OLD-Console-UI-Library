@@ -1,71 +1,106 @@
 ﻿using Lodeon.Terminal.Graphics;
 using Lodeon.Terminal.UI.Layout;
+using Lodeon.Terminal.UI.Navigation;
+using Lodeon.Terminal.UI.Paging;
+////using Lodeon.Terminal.UI.Layout;
 using Lodeon.Terminal.UI.Units;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 
 namespace Lodeon.Terminal.UI;
 
+public interface IElement : ITransform, IRenderable
+{
+    public class Context
+    {
+        public delegate void ParentChangeHandler(IElement? oldParent, IElement? newParent);
+        public event ParentChangeHandler? ParentChanged;
+
+        private IElement? _parent;
+        public IElement? Parent { get => _parent; set { IElement? oldParent = _parent; _parent = value; ParentChanged?.Invoke(oldParent, value); } };
+        
+        public Page Page { get; init; } = default!;
+        public Navigator<string, Page> Navigator { get; init; } = default!;
+
+        public PixelPoint initialSize { get; init; }
+    }
+}
+
 /// <summary>
 /// Base class for UI elements 
 /// </summary>
-public abstract class Element : ITransform, IRenderable
+public abstract class Element<TContext> : IElement where TContext : IElement.Context
 {
-    protected Page Page { get { if (_page == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _page; } }
-    private Page? _page;
+    //public delegate void DisplayRequestedDel(ReadonlyGraphicBuffer graphic);
 
-    public ITransform Parent { get { if (_parent == null) throw new Exception("Internal error. Element was used before initializing using \"Initialize\" function"); return _parent; } }
-    private ITransform? _parent;
+    public Element(TContext context)
+    {
+        Context = context;
+        SizeChanged += SizeChangedHandler;
+        _buffer = new GraphicBuffer(Context.initialSize.X, context.initialSize.Y);
+        _canvas = new GraphicCanvas(_buffer);
+    }
 
-    protected Navigator<string, Page> Navigator { get { if (_navigator is null) throw new ArgumentNullException(nameof(Navigator), "Element was not initialized"); return _navigator; } }
-    private Navigator<string, Page>? _navigator;
+    protected TContext Context { get; private init; }
 
-    protected ExceptionHandler ExceptionHandler { get { if (_exceptionHandler is null) throw new ArgumentNullException(nameof(ExceptionHandler), "Element was not initialized"); return _exceptionHandler; } }
-    private ExceptionHandler? _exceptionHandler;
-    //public Element[] Children { get { if (_children == null) throw new Exception("Internal error. Element was used before initializing using \"InitChildren\" function"); return _children; } }
+    public PixelPoint Position { get; set; } = default;
+    public PixelPoint Size { get; set; } = default;
 
-    public abstract bool IsFocusable { get; }
-    public abstract bool IsContainer { get; }
-    
+    private GraphicBuffer _buffer;
+    private GraphicCanvas _canvas;
 
-    public delegate void DisplayRequestedDel(ReadonlyGraphicBuffer graphic);
-    public event DisplayRequestedDel? DisplayRequested;
+    protected void Display()
+        => Context.Page.Display(this);
+
+    /// <see cref="IRenderable"/> Implementation
+    public abstract ReadOnlySpan<Pixel> GetGraphics();
+    public abstract Rectangle GetScreenArea();
+
+
+    /// <see cref="ITransform"/> Implementation
+    public abstract PixelPoint GetPosition();
+    public abstract PixelPoint GetSize();
     public event TransformChangedEvent? PositionChanged;
     public event TransformChangedEvent? SizeChanged;
 
-    public virtual void Initialize(Page page, ITransform parent, ExceptionHandler exceptionHandler, Navigator<string, Page> navigator)
+    private void SizeChangedHandler(TransformChangeArgs<PixelPoint> args)
+        => OnDraw(_canvas, _buffer.Width, _buffer.Height);
+
+    protected abstract void OnDraw(GraphicCanvas canvas, int width, int height);
+}
+
+public interface IContainer
+{
+    public class Context : IElement.Context
     {
-        _page = page;
-        ArgumentNullException.ThrowIfNull(_page);
-
-        _parent = parent;
-        ArgumentNullException.ThrowIfNull(_parent);
-
-        _exceptionHandler = exceptionHandler;
-        ArgumentNullException.ThrowIfNull(_exceptionHandler);
-
-        _navigator = navigator;
-        ArgumentNullException.ThrowIfNull(_navigator);
+        // Type of layout handler    
     }
+}
 
-    protected void Display()
-        => Page.Display(this);
+public abstract class Container<TContext> : Element<TContext>, IContainer where TContext : IContainer.Context
+{
+    protected Container(TContext context) : base(context) { }
 
-    public abstract ReadOnlySpan<Pixel> GetGraphics();
+    private List<IElement> _children = new();
 
-    public abstract Rectangle GetScreenArea();
+    public void AddChild(IElement child)
+        => _children.Add(child);
 
-    public abstract PixelPoint GetPosition();
+    public void RemoveChild(IElement child)
+        => _children.Remove(child);
 
-    public abstract PixelPoint GetSize();
+    public IElement GetChild(int index)
+        => _children[index];
 
-    internal abstract ReadOnlySpan<Element> GetChildren();
-    public abstract void AddChild(Element element);
-    public abstract void RemoveChild(Element element);
+    private void UpdateLayout()
+    {
+        Context.Layout
+    }
 }

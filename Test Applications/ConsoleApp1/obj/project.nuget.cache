@@ -1,8 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "j3FnU0C2Xf+/1KCMETjNBViB4ZFUY6DJboDYy3Su2p/3CNAPWBhhIl2v0xqS4bihUP4e1qfgTKJZ1zWqGBmhJQ==",
+  "dgSpecHash": "vikakCHseY82Jb3SNzND5eIUzoExP1amnM1j0bTHGN8kHMCwGPY7USLzbwmMw2Bc+eDoNDqvlwFsOQw05/HE6w==",
   "success": true,
   "projectFilePath": "C:\\Users\\minec\\Source\\Repos\\Lodeon003\\Console-UI-Library\\Test Applications\\ConsoleApp1\\Test Application.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\minec\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\6.0.19\\microsoft.windowsdesktop.app.ref.6.0.19.nupkg.sha512",
+    "C:\\Users\\minec\\.nuget\\packages\\microsoft.netcore.app.ref\\6.0.19\\microsoft.netcore.app.ref.6.0.19.nupkg.sha512",
+    "C:\\Users\\minec\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\6.0.19\\microsoft.aspnetcore.app.ref.6.0.19.nupkg.sha512",
+    "C:\\Users\\minec\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\6.0.19\\microsoft.netcore.app.host.win-x64.6.0.19.nupkg.sha512"
+  ],
   "logs": []
 }

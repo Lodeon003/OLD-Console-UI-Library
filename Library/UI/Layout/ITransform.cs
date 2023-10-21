@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Lodeon.Terminal.UI;
+namespace Lodeon.Terminal.UI.Layout;
 
 public delegate void TransformChangedEvent(TransformChangeArgs<PixelPoint> args);
 

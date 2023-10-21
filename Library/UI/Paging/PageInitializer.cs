@@ -1,6 +1,7 @@
 ﻿using System.Security;
+using Lodeon.Terminal.UI.Navigation;
 
-namespace Lodeon.Terminal.UI;
+namespace Lodeon.Terminal.UI.Paging;
 
 /// <summary>
 /// A class that initializes a collection of UI pages. It interfaces with users making them able to choose which page will be the main one

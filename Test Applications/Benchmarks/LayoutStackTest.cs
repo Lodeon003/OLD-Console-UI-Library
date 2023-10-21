@@ -29,7 +29,7 @@ internal class LayoutStackTest
 
         GraphicBuffer stackBuffer = new GraphicBuffer(size.X, size.Y);
         GraphicCanvas stackCanvas = new GraphicCanvas(stackBuffer);
-        stackCanvas.DrawEmptyRectangle(new(0, 0, stackBuffer.Width, stackBuffer.Height), Color.FromRGB(255, 0, 0));
+        stackCanvas.DrawBorder(new(0, 0, stackBuffer.Width, stackBuffer.Height), Color.FromRGB(255, 0, 0));
 
         List<Element> elements = new List<Element>()
         {
@@ -118,10 +118,10 @@ internal class LayoutStackTest
 
             driver.Clear();
             driver.Display(msg, PixelPoint.Zero);
-            driver.Display(stackBuffer, stackBuffer.GetSourceArea(), stack.Position);
+            driver.Display(stackBuffer, stackBuffer.GetArea(), stack.Position);
 
             for(int i = 0; i < elements.Count; i++)
-                driver.Display(elements[i].buffer.GetGraphics(), elements[i].buffer.GetSourceArea(), positions[i]);
+                driver.Display(elements[i].buffer.GetGraphics(), elements[i].buffer.GetArea(), positions[i]);
         }
     }
 

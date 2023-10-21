@@ -1,4 +1,4 @@
-﻿namespace Lodeon.Terminal.UI;
+﻿namespace Lodeon.Terminal.UI.Navigation;
 
 public abstract class Navigator
 {
@@ -16,7 +16,7 @@ public class Navigator<T1, T2> : Navigator where T1 : notnull where T2 : notnull
     private object _lock = new object();
 
     public Navigator(Dictionary<T1, T2> pages)
-        => this._elements = pages;
+        => _elements = pages;
 
     public delegate void NavigatorDel(T2 value);
     public delegate void NavigatorFailDel(ErrorCode error);
@@ -27,15 +27,15 @@ public class Navigator<T1, T2> : Navigator where T1 : notnull where T2 : notnull
 
     public bool Add(T1 key, T2 value)
     {
-        lock(_lock)
+        lock (_lock)
         {
-             return _elements.TryAdd(key, value);
+            return _elements.TryAdd(key, value);
         }
     }
 
     public bool Remove(T1 key)
     {
-        lock(_lock)
+        lock (_lock)
         {
             return _elements.Remove(key);
         }
@@ -43,18 +43,18 @@ public class Navigator<T1, T2> : Navigator where T1 : notnull where T2 : notnull
 
     public void Iterate(Action<T2> code)
     {
-       lock(_lock)
-       {
-           foreach(var pair in _elements)
-              code.Invoke(pair.Value);
-       }
+        lock (_lock)
+        {
+            foreach (var pair in _elements)
+                code.Invoke(pair.Value);
+        }
     }
 
     public void Navigate(Func<T2, bool> predicate)
     {
-        lock(_lock)
+        lock (_lock)
         {
-            foreach(T2 element in _elements.Values)
+            foreach (T2 element in _elements.Values)
             {
                 if (!predicate.Invoke(element))
                     continue;
@@ -71,7 +71,7 @@ public class Navigator<T1, T2> : Navigator where T1 : notnull where T2 : notnull
     {
         lock (_lock)
         {
-            if(_elements.TryGetValue(key, out T2? value))
+            if (_elements.TryGetValue(key, out T2? value))
                 Task.Run(() => OnNavigate?.Invoke(value));
             else
                 Task.Run(() => OnNavigateFail?.Invoke(ErrorCode.NotFoundByKey));

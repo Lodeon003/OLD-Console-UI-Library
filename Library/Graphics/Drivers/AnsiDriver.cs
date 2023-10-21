@@ -98,7 +98,7 @@ public sealed class AnsiDriver : Driver
         }
     }
 
-    private async Task Input()
+    private async void Input()
     {
         try
         {

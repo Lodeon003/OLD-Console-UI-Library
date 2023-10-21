@@ -1,13 +1,13 @@
-﻿using Lodeon.Terminal.UI.Layout;
+﻿//using Lodeon.Terminal.UI.Layout;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Lodeon.Terminal.UI
+namespace Lodeon.Terminal.UI.Paging
 {
-    internal class ErrorPage : LayoutPage
+    internal class ErrorPage : Page
     {
         private IReadOnlyCollection<Exception> _exceptions;
 
@@ -16,7 +16,12 @@ namespace Lodeon.Terminal.UI
             _exceptions = exceptions;
         }
 
-        protected override void OnDeselect() {}
+        public override void Popup(string title, string text)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void OnDeselect() { }
 
         protected override void OnSelect() { }
     }

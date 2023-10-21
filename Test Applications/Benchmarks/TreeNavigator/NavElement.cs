@@ -1,6 +1,6 @@
 ﻿using Lodeon.Terminal;
 using Lodeon.Terminal.Graphics;
-using Lodeon.Terminal.UI;
+using Lodeon.Terminal.UI.Navigation;
 using Lodeon.Terminal.UI.Units;
 using System;
 using System.Collections.Generic;
@@ -22,15 +22,9 @@ namespace Benchmarks.TreeNavigator
             Canvas = new GraphicCanvas(_buffer);
         }
 
-        public void Display(Driver driver, Color color)
+        public void SetColor(Color color)
         {
             _buffer.Fill(color);
-            driver.Display(_buffer.GetGraphics(), _buffer.GetSourceArea(), _position);
-        }
-
-        public void Display(Driver driver)
-        {
-            Display(driver, _color);
         }
 
         private Color _color;
@@ -38,6 +32,11 @@ namespace Benchmarks.TreeNavigator
         private GraphicBuffer _buffer;
         public GraphicCanvas Canvas;
         private INavigableContainer? _parent;
+
+        public void Display(Driver driver)
+        {
+            driver.Display(_buffer.GetGraphics(), _buffer.GetArea(), _position);
+        }
 
         public INavigableContainer? GetParent()
         {

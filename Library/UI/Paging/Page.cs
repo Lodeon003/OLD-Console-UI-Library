@@ -1,7 +1,9 @@
-﻿using Lodeon.Terminal.UI.Units;
+﻿using Lodeon.Terminal.UI.Layout;
+using Lodeon.Terminal.UI.Navigation;
+using Lodeon.Terminal.UI.Units;
 using System.Security.Cryptography;
 
-namespace Lodeon.Terminal.UI;
+namespace Lodeon.Terminal.UI.Paging;
 
 public abstract class Page : ITransform
 {
@@ -59,18 +61,18 @@ public abstract class Page : ITransform
     private void Script_OnPageChanged(Page page)
     {
         // if page == this
-            // Call events
-            // Update all elements on screen
-            // start loop
+        // Call events
+        // Update all elements on screen
+        // start loop
         // else
-            // Call events
-            // Stop loop
+        // Call events
+        // Stop loop
 
         // enable / disable input?
         throw new NotImplementedException();
     }
 
-    internal void Display(Element element)
+    internal void Display(IElement element)
     {
         OverlayParent(element);
         ProgramBuffer.Overlay(element.GetGraphics(), element.GetScreenArea());
@@ -78,18 +80,18 @@ public abstract class Page : ITransform
         Out.Display(ProgramBuffer);
     }
 
-    private void OverlayChildren(Element element)
+    private void OverlayChildren(IElement element)
     {
-        ReadOnlySpan<Element> children = element.GetChildren();
+        ReadOnlySpan<IElement> children = element.GetChildren();
 
-        for(int i = 0; i < children.Length; i++)
+        for (int i = 0; i < children.Length; i++)
         {
             ProgramBuffer.Overlay(children[i].GetGraphics(), children[i].GetScreenArea());
             OverlayChildren(children[i]);
         }
     }
 
-    private void OverlayParent(Element element)
+    private void OverlayParent(IElement element)
     {
         if (element.Parent != null)
             OverlayParent(element);
@@ -108,10 +110,11 @@ public abstract class Page : ITransform
         Task mainTask = Task.Run(OnSelect, token);
         Task waitTask = token.WaitAsync();
 
-        try {
+        try
+        {
             await Task.WhenAll(mainTask, waitTask);
         }
-        catch(OperationCanceledException) { }
+        catch (OperationCanceledException) { }
     }
 
     /// <summary>

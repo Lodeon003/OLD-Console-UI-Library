@@ -1,7 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Security.AccessControl;
 
-namespace Lodeon.Terminal.UI;
+namespace Lodeon.Terminal.UI.Navigation;
 
 // Fai di salvare tutto con le interfacce ma controllando che solo valori che derivano da T vengano inseriti. Converti all'uscita T
 
@@ -60,7 +60,7 @@ public class TreeNavigator//<T> where T : INavigable
         INavigable currentElement = _elements[_currentIndex];
 
         // If it is a container set it as current container
-        if(currentElement is INavigableContainer container)
+        if (currentElement is INavigableContainer container)
             return SetContainer(container);
 
         // Else select element
@@ -89,8 +89,8 @@ public class TreeNavigator//<T> where T : INavigable
 
     public bool SetContainer(INavigableContainer element) // Fai si di poter navigare a qualunque elemento. Se è un container imposta i figli, // altrimenti "selezionalo". Quando viene cambiato parent dovrebbe venir chiamato l'evento, OnNavigate sul primo figlio (per updatare le UI)
     {
-        lock(_lock)
-        {            
+        lock (_lock)
+        {
             if (element == null)
                 return false;
 
@@ -122,10 +122,10 @@ public class TreeNavigator//<T> where T : INavigable
     /// <returns></returns>
     private bool TryDeselect()
     {
-        lock(_lock)
+        lock (_lock)
         {
             // If no element is selected action succeded
-            if (!_isElementSelected) 
+            if (!_isElementSelected)
                 return true;
 
             // If element is selected try to deselect it
@@ -140,7 +140,7 @@ public class TreeNavigator//<T> where T : INavigable
     /// <returns></returns>
     public bool Navigate(int index)
     {
-        lock(_lock)
+        lock (_lock)
         {
             if (index < 0 || index >= _elements.Length)
                 return false;
@@ -151,13 +151,13 @@ public class TreeNavigator//<T> where T : INavigable
 
             INavigable lastElement = _elements[_currentIndex];
             INavigable currentElement = _elements[index];
-            
+
             _currentIndex = index;
 
             OnNavigateFrom?.Invoke(lastElement);
             OnNavigateTo?.Invoke(currentElement);
             return true;
-        }    
+        }
     }
 
     /// <summary>
@@ -174,7 +174,7 @@ public class TreeNavigator//<T> where T : INavigable
     /// <returns></returns>
     public bool Select(int index)
     {
-        lock(_lock)
+        lock (_lock)
         {
             // If index is invalid
             if (index < 0 || index >= _elements.Length)
@@ -185,7 +185,7 @@ public class TreeNavigator//<T> where T : INavigable
                 return false;
 
             // If element is already selected
-            if(_isElementSelected && _selectedIndex == index)
+            if (_isElementSelected && _selectedIndex == index)
                 return false;
 
             // If element is already selected try to deselect it and select new one
@@ -199,7 +199,7 @@ public class TreeNavigator//<T> where T : INavigable
             return true;
         }
     }
-    
+
     /// <summary>
     /// Returns true if an element was selected and got deselected.<br/>
     /// Returns false if
@@ -211,7 +211,7 @@ public class TreeNavigator//<T> where T : INavigable
     /// <returns></returns>
     public bool Deselect()
     {
-        lock(_lock)
+        lock (_lock)
         {
             // If already not selected
             if (!_isElementSelected)
@@ -237,7 +237,7 @@ public interface INavigable
 
 public interface INavigableElement : INavigable
 {
-    
+
 }
 
 public interface INavigableContainer : INavigable

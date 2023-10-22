@@ -19,12 +19,16 @@ namespace Lodeon.Terminal.UI;
 
 public interface IElement : ITransform, IRenderable
 {
-    public void SetParent(IContainer? parent);
-    public void UnsetParent();
+    public IContainer? Parent { get; set; }
+    public Page? Page { get; protected set; }
 
     public event EventHandler? ParentChanged;
-
-    public IContainer? Parent { get; set; }
+    
+    /// <summary>
+    /// Event Raised whenever this element or it's children (if container) request to be drawn<br/>
+    /// 'sender' is the element that requested to be drawn
+    /// </summary>
+    public event EventHandler? DrawRequested;
 
     public class Context
     {
@@ -59,8 +63,7 @@ public abstract class Element<TContext> : IElement where TContext : IElement.Con
 
     public PixelPoint Position { get; set; } = default;
     public PixelPoint Size { get; set; } = default;
-    public IContainer? Parent { get => _parent; set { if (value == null) UnsetParent(); else SetParent(value); } }
-
+    public IContainer? Parent { get => _parent; set { if (_parent == value) return; _parent = value; Page = _parent?.Page; ParentChanged?.Invoke(this, EventArgs.Empty); } }
     public Page? Page { get; private set; }
 
     private GraphicBuffer _buffer;
@@ -71,7 +74,7 @@ public abstract class Element<TContext> : IElement where TContext : IElement.Con
     public event ITransform.PositionChangeDel? PositionChanged;
     public event ITransform.SizeChangeDel? SizeChanged;
     public event ITransform.TransformChangeDel? TransformChanged;
-    public event EventHandler? DrawRequested;
+    public virtual event EventHandler? DrawRequested;
     public event EventHandler? ParentChanged;
 
     // ------   OVERRIDABLE     ------------------------------------------------------------------------------------------
@@ -103,20 +106,6 @@ public abstract class Element<TContext> : IElement where TContext : IElement.Con
 
     // ------   PRIVATE     ------------------------------------------------------------------------------------------
 
-    public void UnsetParent()
-    {
-        _parent = null;
-    }
-
-    public void SetParent(IContainer? parent)
-    {
-        if (_parent == parent)
-            return;
-
-        _parent = parent;
-        ParentChanged?.Invoke(this, EventArgs.Empty);
-    }
-
     private void OnSizeChanged(ITransform _, PixelPoint oldSize, PixelPoint newSize)
     {
         _buffer.Resize(newSize.X, newSize.Y);
@@ -124,7 +113,7 @@ public abstract class Element<TContext> : IElement where TContext : IElement.Con
     }
 }
 
-public interface IContainer
+public interface IContainer : IElement
 {
     void AddChild(IElement element);
     void RemoveChild(IElement element);
@@ -142,22 +131,26 @@ public abstract class Container<TContext> : Element<TContext>, IContainer where 
 
     private List<IElement> _children = new();
 
+    public sealed override event EventHandler? DrawRequested;
+
     public void AddChild(IElement child)
     {
         _children.Add(child);
 
-        child.SetParent(this);
+        child.Parent = this;
         child.ParentChanged += Child_OnParentChanged;
+        child.DrawRequested += Child_OnDrawRequested;
     }
 
     public void RemoveChild(IElement child)
     {
         _children.Remove(child);
 
+        child.DrawRequested -= Child_OnDrawRequested;
         child.ParentChanged -= Child_OnParentChanged;
         
         if(child.Parent == this)
-            child.UnsetParent();
+            child.Parent = null;
     }
 
     public IElement GetChild(int index)
@@ -181,6 +174,12 @@ public abstract class Container<TContext> : Element<TContext>, IContainer where 
 
         RemoveChild(child);
     }
+
+    ///<summary>
+    /// Invoked when a child requested to be drawn. Forward the request so this' parent can bring it to the page (upmost parent)
+    /// </summary>
+    private void Child_OnDrawRequested(object? sender, EventArgs e)
+        => DrawRequested?.Invoke(sender, e);
 
     private void UpdateLayout()
     {

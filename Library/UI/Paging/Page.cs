@@ -30,11 +30,12 @@ public abstract class Page : ITransform
     protected GraphicBuffer ProgramBuffer { get { if (_programBuffer is null) throw new ArgumentNullException(nameof(ProgramBuffer), "Element was not initialized"); return _programBuffer; } }
     private GraphicBuffer? _programBuffer;
 
+    public event ITransform.PositionChangeDel? PositionChanged;
+    public event ITransform.SizeChangeDel? SizeChanged;
+    public event ITransform.TransformChangeDel? TransformChanged;
+
     //protected RootElement Root { get { if (_root is null) throw new ArgumentNullException(nameof(RootElement), "Element was not initialized"); return _root; } }
     //private RootElement? _root;
-
-    public event TransformChangedEvent PositionChanged;
-    public event TransformChangedEvent SizeChanged;
 
     public bool IsMain { get; private set; }
 

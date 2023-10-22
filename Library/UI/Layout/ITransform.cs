@@ -7,14 +7,20 @@ using System.Threading.Tasks;
 
 namespace Lodeon.Terminal.UI.Layout;
 
-public delegate void TransformChangedEvent(TransformChangeArgs<PixelPoint> args);
 
 public interface ITransform
 {
-    public event TransformChangedEvent PositionChanged;
-    public event TransformChangedEvent SizeChanged;
+    public delegate void PositionChangeDel(ITransform sender, PixelPoint oldPosition, PixelPoint newPosition);
+    public delegate void SizeChangeDel(ITransform sender, PixelPoint oldPosition, PixelPoint newPosition);
+    public delegate void TransformChangeDel(ITransform sender, Pixel4 oldState, Pixel4 newState);
+
+    public event PositionChangeDel? PositionChanged;
+    public event SizeChangeDel? SizeChanged;
+    public event TransformChangeDel? TransformChanged;
+
     public PixelPoint GetPosition();
     public PixelPoint GetSize();
+    //public Pixel4 GetArea();
 }
 
 public readonly struct TransformChangeArgs<T>

@@ -19,18 +19,25 @@ namespace Lodeon.Terminal.UI;
 
 public interface IElement : ITransform, IRenderable
 {
+    public void SetParent(IContainer? parent);
+    public void UnsetParent();
+
+    public event EventHandler? ParentChanged;
+
+    public IContainer? Parent { get; set; }
+
     public class Context
     {
-        public delegate void ParentChangeHandler(IElement? oldParent, IElement? newParent);
+        public delegate void ParentChangeHandler(IContainer? oldParent, IContainer? newParent);
         public event ParentChangeHandler? ParentChanged;
 
-        private IElement? _parent;
-        public IElement? Parent { get => _parent; set { IElement? oldParent = _parent; _parent = value; ParentChanged?.Invoke(oldParent, value); } }
+        private IContainer? _parent;
+        public IContainer? Parent { get => _parent; set { var oldParent = _parent; _parent = value; ParentChanged?.Invoke(oldParent, value); } }
         
         public Page Page { get; init; } = default!;
         public Navigator<string, Page> Navigator { get; init; } = default!;
 
-        public PixelPoint initialSize { get; init; }
+        public PixelPoint initialSize { get; set; } = default;
     }
 }
 
@@ -39,46 +46,90 @@ public interface IElement : ITransform, IRenderable
 /// </summary>
 public abstract class Element<TContext> : IElement where TContext : IElement.Context
 {
-    //public delegate void DisplayRequestedDel(ReadonlyGraphicBuffer graphic);
-
     public Element(TContext context)
     {
-        Context = context;
-        SizeChanged += SizeChangedHandler;
-        _buffer = new GraphicBuffer(Context.initialSize.X, context.initialSize.Y);
+        Page = context.Page;
+        Parent = context.Parent;
+        
+        SizeChanged += OnSizeChanged;
+        
+        _buffer = new GraphicBuffer(context.initialSize.X, context.initialSize.Y);
         _canvas = new GraphicCanvas(_buffer);
     }
 
-    protected TContext Context { get; private init; }
-
     public PixelPoint Position { get; set; } = default;
     public PixelPoint Size { get; set; } = default;
+    public IContainer? Parent { get => _parent; set { if (value == null) UnsetParent(); else SetParent(value); } }
+
+    public Page? Page { get; private set; }
 
     private GraphicBuffer _buffer;
     private GraphicCanvas _canvas;
+    private IContainer? _parent;
 
-    protected void Display()
-        => Context.Page.Display(this);
+    // ------   EVENTS     ------------------------------------------------------------------------------------------
+    public event ITransform.PositionChangeDel? PositionChanged;
+    public event ITransform.SizeChangeDel? SizeChanged;
+    public event ITransform.TransformChangeDel? TransformChanged;
+    public event EventHandler? DrawRequested;
+    public event EventHandler? ParentChanged;
 
-    /// <see cref="IRenderable"/> Implementation
-    public abstract ReadOnlySpan<Pixel> GetGraphics();
-    public abstract Rectangle GetScreenArea();
-
-
-    /// <see cref="ITransform"/> Implementation
-    public abstract PixelPoint GetPosition();
-    public abstract PixelPoint GetSize();
-    public event TransformChangedEvent? PositionChanged;
-    public event TransformChangedEvent? SizeChanged;
-
-    private void SizeChangedHandler(TransformChangeArgs<PixelPoint> args)
-        => OnDraw(_canvas, _buffer.Width, _buffer.Height);
-
+    // ------   OVERRIDABLE     ------------------------------------------------------------------------------------------
     protected abstract void OnDraw(GraphicCanvas canvas, int width, int height);
+
+    // ------   PUBLIC     ------------------------------------------------------------------------------------------
+
+    public ReadOnlySpan<Pixel> GetGraphics()
+        => _buffer.GetGraphics();
+
+    public Rectangle GetScreenArea()
+        => _buffer.GetArea().Move(Position);
+
+    public PixelPoint GetPosition()
+        => Position;
+
+    public PixelPoint GetSize()
+        => Size;
+
+    /// <summary>
+    /// Calls element's draw procedure and signals page to draw this element.<br/>
+    /// (Invokes <see cref="OnDraw(GraphicCanvas, int, int)"/> method and raises <see cref="DrawRequested"/> event that page will listen to)
+    /// </summary>
+    protected void Draw()
+    {
+        OnDraw(_canvas, _buffer.Width, _buffer.Height);
+        DrawRequested?.Invoke(this, null!);
+    }
+
+    // ------   PRIVATE     ------------------------------------------------------------------------------------------
+
+    public void UnsetParent()
+    {
+        _parent = null;
+    }
+
+    public void SetParent(IContainer? parent)
+    {
+        if (_parent == parent)
+            return;
+
+        _parent = parent;
+        ParentChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnSizeChanged(ITransform _, PixelPoint oldSize, PixelPoint newSize)
+    {
+        _buffer.Resize(newSize.X, newSize.Y);
+        Draw();
+    }
 }
 
 public interface IContainer
 {
+    void AddChild(IElement element);
+    void RemoveChild(IElement element);
+    IElement GetChild(int index);
+
     public class Context : IElement.Context
     {
         // Type of layout handler    
@@ -92,13 +143,44 @@ public abstract class Container<TContext> : Element<TContext>, IContainer where 
     private List<IElement> _children = new();
 
     public void AddChild(IElement child)
-        => _children.Add(child);
+    {
+        _children.Add(child);
+
+        child.SetParent(this);
+        child.ParentChanged += Child_OnParentChanged;
+    }
 
     public void RemoveChild(IElement child)
-        => _children.Remove(child);
+    {
+        _children.Remove(child);
+
+        child.ParentChanged -= Child_OnParentChanged;
+        
+        if(child.Parent == this)
+            child.UnsetParent();
+    }
 
     public IElement GetChild(int index)
         => _children[index];
+
+
+    /// <summary>
+    /// Invoked if children's parent was changed and this was his last parent.<br/>
+    /// Element must be removed as it's not a child anymore. (Won't fire if you call <see cref="RemoveChild(IElement)"/>)
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    /// <exception cref="ArgumentNullException"></exception>
+    private void Child_OnParentChanged(object? sender, EventArgs e)
+    {
+        // If the parent was changed from outside of this parent element, remove it from it's children
+        IElement? child = sender as IElement;
+
+        if (child is null)
+            throw new ArgumentNullException();
+
+        RemoveChild(child);
+    }
 
     private void UpdateLayout()
     {

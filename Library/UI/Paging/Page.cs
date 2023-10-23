@@ -1,23 +1,13 @@
-﻿using Lodeon.Terminal.UI.Layout;
+﻿using Lodeon.Terminal.Graphics;
+using Lodeon.Terminal.UI.Layout;
 using Lodeon.Terminal.UI.Navigation;
 using Lodeon.Terminal.UI.Units;
 using System.Security.Cryptography;
 
 namespace Lodeon.Terminal.UI.Paging;
 
-public abstract class Page : ITransform
+public class Page : Container<Page.InitializationContext>
 {
-
-    public PixelPoint GetPosition()
-    {
-        throw new NotImplementedException();
-    }
-
-    public PixelPoint GetSize()
-    {
-        throw new NotImplementedException();
-    }
-
     private Script Script { get { if (_script is null) throw new ArgumentNullException(nameof(Script), "Element was not initialized"); return _script; } }
     private Script? _script;
 
@@ -29,6 +19,10 @@ public abstract class Page : ITransform
 
     protected GraphicBuffer ProgramBuffer { get { if (_programBuffer is null) throw new ArgumentNullException(nameof(ProgramBuffer), "Element was not initialized"); return _programBuffer; } }
     private GraphicBuffer? _programBuffer;
+
+    public Page(InitializationContext context) : base(context)
+    {
+    }
 
     public event ITransform.PositionChangeDel? PositionChanged;
     public event ITransform.SizeChangeDel? SizeChanged;
@@ -71,7 +65,7 @@ public abstract class Page : ITransform
         throw new NotImplementedException();
     }
 
-    internal void Display(IElement element)
+    private void Display(IElement element)
     {
         // Clear buffer
         // Overlay all element's parents recursively
@@ -81,31 +75,8 @@ public abstract class Page : ITransform
         // NOTE: It is wrong to give pages the program's buffer, but it is better to only have one instead
         // of many. Make it so only selected page can call buffer display. Maybe fire a 'DisplayRequest' event
         // that the program will listen to
-
-        //ProgramBuffer.Overlay(element.GetGraphics(), element.GetScreenArea());
-        //OverlayChildren(element);
-        //Out.Display(ProgramBuffer.GetGraphics(), ProgramBuffer.GetArea(), new(0,0));
         throw new NotImplementedException();
     }
-
-    //private void OverlayChildren(IElement element)
-    //{
-    //    ReadOnlySpan<IElement> children = element.GetChildren();
-    //
-    //    for (int i = 0; i < children.Length; i++)
-    //    {
-    //        ProgramBuffer.Overlay(children[i].GetGraphics(), children[i].GetScreenArea());
-    //        OverlayChildren(children[i]);
-    //    }
-    //}
-
-    //private void OverlayParent(IElement element)
-    //{
-    //    if (element.Parent != null)
-    //        OverlayParent(element);
-    //
-    //    ProgramBuffer.Overlay(element.GetGraphics(), element.GetScreenArea());
-    //}
 
     private void Script_OnExit()
     {
@@ -131,15 +102,25 @@ public abstract class Page : ITransform
     protected virtual void Load()
         => OnLoad();
 
-    public abstract void Popup(string title, string text);
-    protected abstract void OnSelect();
+    public virtual void Popup(string title, string text) { }
+    protected virtual void OnSelect() { }
     protected virtual void OnLoad() { }
-    protected abstract void OnDeselect();
+    protected virtual void OnDeselect() { }
 
+    protected override void OnDraw(GraphicCanvas canvas, int width, int height)
+    {
+        canvas.Fill(Color.FromRGB(255, 255, 204));
+        throw new NotImplementedException("Draw all objects");
+    }
 
     // These two: to implement
     //protected abstract void Main();
     //protected abstract void OnExit();
 
     //protected virtual void OnInitialize() { }
+
+    public class InitializationContext : IContainer.InitializationContext
+    {
+
+    }
 }

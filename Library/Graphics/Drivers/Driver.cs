@@ -55,12 +55,22 @@ public abstract class Driver : IDisposable
     public static Driver GetDefaultDriver()
     {
         if (OperatingSystem.IsWindows())
-        {
             return new WindowsDriver();
-        }
+        
         return new AnsiDriver();
     }
 
+    /// <summary>
+    /// Returns a type object associated with the driver that bests fits the current operating system
+    /// </summary>
+    /// <returns>A <see cref="Type"/> object</returns>
+    public static Type GetDefaultDriverType()
+    {
+        if (OperatingSystem.IsWindows())
+            return typeof(WindowsDriver);
+        
+        return typeof(AnsiDriver);
+    }
 
     #region PUBLIC METHODS
 

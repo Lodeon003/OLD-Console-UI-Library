@@ -12,6 +12,7 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Text;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using System.Xml;
 
@@ -20,7 +21,7 @@ namespace Lodeon.Terminal.UI;
 public interface IElement : ITransform, IRenderable
 {
     public IContainer? Parent { get; set; }
-    public Page? Page { get; protected set; }
+    public Page? Page { get; }
 
     public event EventHandler? ParentChanged;
     
@@ -30,25 +31,35 @@ public interface IElement : ITransform, IRenderable
     /// </summary>
     public event EventHandler? DrawRequested;
 
-    public class Context
+    public class InitializationContext
     {
-        public delegate void ParentChangeHandler(IContainer? oldParent, IContainer? newParent);
-        public event ParentChangeHandler? ParentChanged;
+        //public delegate void ParentChangeHandler(IContainer? oldParent, IContainer? newParent);
+        //public event ParentChangeHandler? ParentChanged;
 
-        private IContainer? _parent;
-        public IContainer? Parent { get => _parent; set { var oldParent = _parent; _parent = value; ParentChanged?.Invoke(oldParent, value); } }
-        
+        //private IContainer? _parent;
+        public IContainer? Parent { get; init; }
+        //public IContainer? Parent { get => _parent; set { var oldParent = _parent; _parent = value; ParentChanged?.Invoke(oldParent, value); } }
+
         public Page Page { get; init; } = default!;
         public Navigator<string, Page> Navigator { get; init; } = default!;
 
-        public PixelPoint initialSize { get; set; } = default;
+        public PixelPoint InitialSize { get; init; } = default;
+    }
+
+    public static Page FromXML(string path, Page.InitializationContext pageContext)
+    {
+        XmlDocument xml = new XmlDocument();
+        xml.Load(path);
+
+        Page page = new Page(pageContext);
+        return page;
     }
 }
 
 /// <summary>
 /// Base class for UI elements 
 /// </summary>
-public abstract class Element<TContext> : IElement where TContext : IElement.Context
+public abstract class Element<TContext> : IElement where TContext : IElement.InitializationContext
 {
     public Element(TContext context)
     {
@@ -57,7 +68,7 @@ public abstract class Element<TContext> : IElement where TContext : IElement.Con
         
         SizeChanged += OnSizeChanged;
         
-        _buffer = new GraphicBuffer(context.initialSize.X, context.initialSize.Y);
+        _buffer = new GraphicBuffer(context.InitialSize.X, context.InitialSize.Y);
         _canvas = new GraphicCanvas(_buffer);
     }
 
@@ -78,8 +89,19 @@ public abstract class Element<TContext> : IElement where TContext : IElement.Con
     public event EventHandler? ParentChanged;
 
     // ------   OVERRIDABLE     ------------------------------------------------------------------------------------------
+    /// <summary>
+    /// Invoked whenever this element requested to be drawn
+    /// </summary>
+    /// <param name="canvas"></param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
     protected abstract void OnDraw(GraphicCanvas canvas, int width, int height);
-
+    
+    /// <summary>
+    /// Invoked whenever this element or it's children (if container) request to be drawn
+    /// </summary>
+    /// <param name="sender"></param>
+    protected virtual void OnDrawRequested(IElement sender) { }
     // ------   PUBLIC     ------------------------------------------------------------------------------------------
 
     public ReadOnlySpan<Pixel> GetGraphics()
@@ -100,8 +122,9 @@ public abstract class Element<TContext> : IElement where TContext : IElement.Con
     /// </summary>
     protected void Draw()
     {
+        OnDrawRequested(this);
         OnDraw(_canvas, _buffer.Width, _buffer.Height);
-        DrawRequested?.Invoke(this, null!);
+        DrawRequested?.Invoke(this, EventArgs.Empty);
     }
 
     // ------   PRIVATE     ------------------------------------------------------------------------------------------
@@ -115,19 +138,32 @@ public abstract class Element<TContext> : IElement where TContext : IElement.Con
 
 public interface IContainer : IElement
 {
+    /// <summary>
+    /// Adds a child element to this container
+    /// </summary>
     void AddChild(IElement element);
+    
+    /// <summary>
+    /// Removes a child element to this container if present
+    /// </summary>
     void RemoveChild(IElement element);
-    IElement GetChild(int index);
 
-    public class Context : IElement.Context
+    /// <summary>
+    /// Returns a container's child or <see cref="null"/> if no child exists with specified index
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    IElement? GetChild(int index);
+
+    public class InitializationContext : IElement.InitializationContext
     {
         // Type of layout handler    
     }
 }
 
-public abstract class Container<TContext> : Element<TContext>, IContainer where TContext : IContainer.Context
+public abstract class Container<TContext> : Element<TContext>, IContainer where TContext : IContainer.InitializationContext
 {
-    protected Container(TContext context) : base(context) { }
+    public Container(TContext context) : base(context) { }
 
     private List<IElement> _children = new();
 
@@ -136,6 +172,7 @@ public abstract class Container<TContext> : Element<TContext>, IContainer where 
     public void AddChild(IElement child)
     {
         _children.Add(child);
+        OnChildAdded(child);
 
         child.Parent = this;
         child.ParentChanged += Child_OnParentChanged;
@@ -145,6 +182,7 @@ public abstract class Container<TContext> : Element<TContext>, IContainer where 
     public void RemoveChild(IElement child)
     {
         _children.Remove(child);
+        OnChildRemoved(child);
 
         child.DrawRequested -= Child_OnDrawRequested;
         child.ParentChanged -= Child_OnParentChanged;
@@ -153,17 +191,23 @@ public abstract class Container<TContext> : Element<TContext>, IContainer where 
             child.Parent = null;
     }
 
-    public IElement GetChild(int index)
-        => _children[index];
+    public IElement? GetChild(int index)
+    {
+        try {
+            return _children[index];
+        }
+        catch { 
+            return null;
+        }
+    }
 
+    protected virtual void OnChildAdded(IElement child) { }
+    protected virtual void OnChildRemoved(IElement child) { }
 
     /// <summary>
     /// Invoked if children's parent was changed and this was his last parent.<br/>
     /// Element must be removed as it's not a child anymore. (Won't fire if you call <see cref="RemoveChild(IElement)"/>)
     /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
-    /// <exception cref="ArgumentNullException"></exception>
     private void Child_OnParentChanged(object? sender, EventArgs e)
     {
         // If the parent was changed from outside of this parent element, remove it from it's children
@@ -179,10 +223,23 @@ public abstract class Container<TContext> : Element<TContext>, IContainer where 
     /// Invoked when a child requested to be drawn. Forward the request so this' parent can bring it to the page (upmost parent)
     /// </summary>
     private void Child_OnDrawRequested(object? sender, EventArgs e)
-        => DrawRequested?.Invoke(sender, e);
+    {
+        if (sender is not IElement element)
+            throw new ArgumentNullException();
+
+        OnDrawRequested(element);
+        DrawRequested?.Invoke(sender, e);
+    }
 
     private void UpdateLayout()
     {
         throw new NotImplementedException("Update children's position");
+    }
+}
+
+public abstract class Container : Container<IContainer.InitializationContext>
+{
+    protected Container(IContainer.InitializationContext context) : base(context)
+    {
     }
 }

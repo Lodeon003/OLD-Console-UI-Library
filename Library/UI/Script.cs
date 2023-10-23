@@ -4,13 +4,89 @@ using Lodeon.Terminal.UI.Paging;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 
 namespace Lodeon.Terminal.UI;
 
+public interface IScript
+{
+    protected void Initialize(ReadOnlySpan<Exception> initializationErrors);
+    protected abstract Task Wait();
+
+    /// <summary>
+    /// [!] UNSAFE: No type checking on script
+    /// Runs a new instance of script of type <typeparamref name="TScript"/>
+    /// </summary>
+    /// <typeparam name="TScript">The type of script to run</typeparam>
+    /// <param name="context"></param>
+    /// <param name="driverType"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
+    private static async Task Run(Type scriptType, Type driverType, InitializationContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(driverType);
+
+        List<Exception> initialExceptions = new List<Exception>();
+        IScript? program;
+        Driver? driver;
+
+
+        // Try to create an instance of the script. Throw if failed
+        try {
+            program = Activator.CreateInstance(scriptType, context) as IScript;
+
+            if (program == null)
+                throw new($"The function itself worked, worked but instance is null. It was casted wrong");
+        }
+        catch (Exception e) {
+            throw new InvalidOperationException($"\'{nameof(Activator.CreateInstance)}\' unexpectedly failed:\n -> {e.Message}", e);
+        }
+
+        try {
+            driver = Activator.CreateInstance(driverType, context) as Driver;
+        }
+        catch (Exception e) {
+            initialExceptions.Add(e);
+        }
+
+        // Run program
+        program.Initialize(CollectionsMarshal.AsSpan(initialExceptions));
+        await program.Wait();
+    }
+
+    /// <summary>
+    /// Instantiates and runs a script of type <typeparamref name="TScript"/>
+    /// </summary>
+    /// <typeparam name="TScript">The class of the script to run</typeparam>
+    /// <typeparam name="TContext">The class of the parameters to pass to the script</typeparam>
+    /// <param name="context">The parameters to pass to the script</param>
+    /// <returns>A task will complete when the script stops running</returns>
+    public static async Task Run<TScript, TContext>(TContext context) where TScript : Script<TContext>, new() where TContext : InitializationContext, new()
+        => await Run(typeof(TScript), Driver.GetDefaultDriverType(), context);
+
+    /// <summary>
+    /// Instantiates and runs a script of type <typeparamref name="TScript"/>
+    /// </summary>
+    /// <typeparam name="TScript">The class of the script to run</typeparam>
+    /// <typeparam name="TDriver">The graphic driver used to display graphics</typeparam>
+    /// <typeparam name="TContext">The class of the parameters to pass to the script</typeparam>
+    /// <param name="context">The parameters to pass to the script</param>
+    /// <returns>A task will complete when the script stops running</returns>
+    public static async Task Run<TScript, TDriver, TContext>(TContext context) where TScript : Script<TContext>, new() where TDriver : Driver, new() where TContext : InitializationContext, new()
+        => await Run(typeof(TScript), typeof(TDriver), context);
+
+
+    public class InitializationContext { }
+}
+
 /// <summary>
-/// The base class for console applications that make use of this' UI library
+/// Derive this class and override functions to create UI Applications.<br/><br/>
+/// <typeparamref name="TContext"/> derives from <see cref="IScript.InitializationContext"/> where to put program's start parameters<br/>
+/// If no parameters are needed derive the <see cref="Script"/> class
 /// </summary>
-public abstract class Script
+public abstract class Script<TContext>
 {
     // Events
     public delegate void EmptyDel();
@@ -27,11 +103,13 @@ public abstract class Script
     private ExceptionHandler? _exceptionHandler;
     private Navigator<string, Page>? _navigator;
     private GraphicBuffer? _outputBuffer;
-    private Driver? _output;
+    private Driver? _driver;
 
 // --------- PRIVATE METHODS
 
-    private void Initialize(ReadOnlySpan<Exception> initialExceptions)
+    protected Script(TContext context) { }
+
+    private protected void Initialize(ReadOnlySpan<Exception> initialExceptions)
     {
         //_pages = new Dictionary<string, Page>();
         _exitSource = new CancellationTokenSource();
@@ -74,6 +152,7 @@ public abstract class Script
         // should run main here.
         _navigator.Navigate((page) => page.IsMain);
     }
+
     private void ThrowIfNotExecuting()
     {
         _executing.Lock((value) =>
@@ -116,7 +195,15 @@ public abstract class Script
         OnExit();
     }
 
-//  --------- PAGE NAVIGATOR and EXCEPTION HANDLER --------------------------------------
+    private void Draw(IElement? element)
+    {
+        if (element is null)
+            return;
+
+        _driver.Display(element);
+    }
+
+    //  --------- PAGE NAVIGATOR and EXCEPTION HANDLER --------------------------------------
 
     private void PageNavigator_OnFail(Navigator.ErrorCode error)
     {
@@ -130,6 +217,14 @@ public abstract class Script
         if (_currentPage == newPage)
             return;
 
+        _currentPage.Lock((page) =>
+        {
+            if (page != null)
+                page.DrawRequested -= Page_DrawRequested;
+        });
+
+        newPage.DrawRequested += Page_DrawRequested;
+        
         _currentPage.Set(newPage);
         OnPageChanged?.Invoke(newPage);
         throw new NotImplementedException("Enable elements.");
@@ -152,8 +247,11 @@ public abstract class Script
             page.Popup("Error", e.Message);
     }
 
+    private void Page_DrawRequested(object? sender, EventArgs e)
+        => Draw(sender as IElement);
 
-//  --------- OVERRIDABLE METHODS --------------------------------------
+
+    //  --------- OVERRIDABLE METHODS --------------------------------------
 
     protected virtual void OnInitializationFailed(IReadOnlyCollection<Exception> exceptions)
     {
@@ -164,49 +262,16 @@ public abstract class Script
     protected virtual void OnExit() { }
     protected virtual void Main() { }
     protected abstract void OnInitialize(PageInitializer pages);
+}
 
-//  --------- STATIC METHODS --------------------------------------
-
-    public static async Task Run<T, TDriver>() where T : Script, new() where TDriver : Driver, new()
-    {
-        //ArgumentNullException.ThrowIfNull(customDriver);
-
-        T program = new T();
-
-        Driver driver;
-        List<Exception> initialExceptions = new List<Exception>();
-
-        try
-        {
-            driver = new TDriver();
-        }
-        catch(Exception e)
-        {
-            initialExceptions.Add(e);
-        }
-
-        program.Initialize(CollectionsMarshal.AsSpan(initialExceptions));
-        await program.Wait();
-    }
-    public static async Task Run<T>() where T : Script, new()
-    {
-        T program = new T();
-
-        Driver driver;
-        List<Exception> initialExceptions = new List<Exception>();
-
-        try
-        {
-            driver = Driver.GetDefaultDriver();
-        }
-        catch (Exception e)
-        {
-            initialExceptions.Add(e);
-        }
-
-        program.Initialize(CollectionsMarshal.AsSpan(initialExceptions));
-        await program.Wait();
-    }
+/// <summary>
+/// The base class for console applications that make use of this' UI library<br/>
+/// Derive this class and override functions to create UI Applications.<br/><br/>
+/// To pass parameters when the script starts use <see cref="Script{TContext}"/> class
+/// </summary>
+public abstract class Script : Script<IScript.InitializationContext>
+{
+    protected Script(IScript.InitializationContext context) : base(context) { }
 }
 
 /*

@@ -8,6 +8,11 @@ using System.Text.Json;
 
 namespace Lodeon.Terminal.UI;
 
+/// <summary>
+/// Describes how scripts interface with consumer code.<br/><br/>
+/// <b>Recommended: </b>  use <see cref="Script"/> or <see cref="Script{TContext}"/> as they offer functionality out of the box.<br/>
+/// Derive to entirerly rewrite <see cref="Script"/>'s default UI Application Functionality.
+/// </summary>
 public interface IScript
 {
     protected void Initialize(ReadOnlySpan<Exception> initializationErrors);

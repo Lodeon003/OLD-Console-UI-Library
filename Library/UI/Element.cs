@@ -31,21 +31,6 @@ public interface IElement : ITransform, IRenderable
     /// </summary>
     public event EventHandler? DrawRequested;
 
-    public class InitializationContext
-    {
-        //public delegate void ParentChangeHandler(IContainer? oldParent, IContainer? newParent);
-        //public event ParentChangeHandler? ParentChanged;
-
-        //private IContainer? _parent;
-        public IContainer? Parent { get; init; }
-        //public IContainer? Parent { get => _parent; set { var oldParent = _parent; _parent = value; ParentChanged?.Invoke(oldParent, value); } }
-
-        public Page Page { get; init; } = default!;
-        public Navigator<string, Page> Navigator { get; init; } = default!;
-
-        public PixelPoint InitialSize { get; init; } = default;
-    }
-
     public static Page FromXML(string path, Page.InitializationContext pageContext)
     {
         XmlDocument xml = new XmlDocument();
@@ -72,9 +57,9 @@ public abstract class Element<TContext> : IElement where TContext : IElement.Ini
         _canvas = new GraphicCanvas(_buffer);
     }
 
+    public IContainer? Parent { get => GetParent(); set => SetParent(value); }
     public PixelPoint Position { get; set; } = default;
     public PixelPoint Size { get; set; } = default;
-    public IContainer? Parent { get => _parent; set { if (_parent == value) return; _parent = value; Page = _parent?.Page; ParentChanged?.Invoke(this, EventArgs.Empty); } }
     public Page? Page { get; private set; }
 
     private GraphicBuffer _buffer;
@@ -92,16 +77,23 @@ public abstract class Element<TContext> : IElement where TContext : IElement.Ini
     /// <summary>
     /// Invoked whenever this element requested to be drawn
     /// </summary>
-    /// <param name="canvas"></param>
-    /// <param name="width"></param>
-    /// <param name="height"></param>
+    /// <param name="canvas">The object used to draw this element's graphics</param>
+    /// <param name="width">The width of this element in terminal window characters</param>
+    /// <param name="height">The height of this element in terminal window characters</param>
     protected abstract void OnDraw(GraphicCanvas canvas, int width, int height);
     
     /// <summary>
     /// Invoked whenever this element or it's children (if container) request to be drawn
     /// </summary>
-    /// <param name="sender"></param>
+    /// <param name="sender">The element that requested to be drawn</param>
     protected virtual void OnDrawRequested(IElement sender) { }
+
+    /// <summary>
+    /// Invoked whenever a key was pressed on the keyboard
+    /// </summary>
+    /// <param name="info">Information about the key being pressed</param>
+    protected virtual void OnKeyDown(ConsoleKeyInfo info) { }
+    
     // ------   PUBLIC     ------------------------------------------------------------------------------------------
 
     public ReadOnlySpan<Pixel> GetGraphics()
@@ -115,6 +107,30 @@ public abstract class Element<TContext> : IElement where TContext : IElement.Ini
 
     public PixelPoint GetSize()
         => Size;
+
+    public void SetParent(IContainer? value)
+    {
+        // NOTE: it can allow NULL values. It is made so element can be detached
+        // from containers and be left outside of the visual tree
+        if (_parent == value)
+            return;
+            
+        // Unhook events from old page
+        Page?.OnKeyDown -= Page_KeyDownHandler;
+
+        // Update values
+        _parent = value;
+        Page = _parent?.Page;
+
+        // Hook events to new page if not null
+        Page?.OnKeyDown += Page_KeyDownHandler;
+
+        // Notify
+        ParentChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public IContainer GetParent()
+        => _parent;
 
     /// <summary>
     /// Calls element's draw procedure and signals page to draw this element.<br/>
@@ -133,6 +149,71 @@ public abstract class Element<TContext> : IElement where TContext : IElement.Ini
     {
         _buffer.Resize(newSize.X, newSize.Y);
         Draw();
+    }
+
+    /// <summary>
+    /// Instantiates a new element from an XML code snippet, setting <paramref cref="context"/> parameters form XML<br/>
+    /// <b>Note: </b> <paramref cref="context"/> parameters set in XML will overwrite values passed as method parameters
+    /// </summary>
+    public static TElement FromXML<TElement, TContext>(XmlNode node, TContext context) where TElement : Element<TContext>
+    {
+        TElement.Parameter[] params = context.GetParameters();
+        throw new NotImplementedException("Read node attributes and set context variables");
+    }
+
+    /// <summary>
+    /// Rappresents a reflected property which are adorned with <see cref="ParameterAttribute"/>
+    /// </summary>
+    public struct Parameter
+    {
+        PropertyInfo Property { get; init; }
+        public ParameterAttribute Attribute { get; init; }
+    }
+
+    /// <summary>
+    /// Returns all properties contained in this implementation of <see cref="InitializationContext"/> which are adorned with <see cref="ParameterAttribute"/>
+    /// </summary>
+    public class InitializationContext
+    {
+        [Parameter("Size")]
+        public PixelPoint InitialSize { get; init; } = default;
+
+        public IContainer? Parent { get; init; }
+        public Page Page { get; init; } = default!;
+        public Navigator<string, Page> Navigator { get; init; } = default!;
+
+        /// <summary>
+        /// Returns all properties contained in this implementation of <see cref="InitializationContext"/> which has a <see cref="ParameterAttribute"/>
+        /// </summary>
+        public static Parameter[] GetParameters()
+        {
+            List<Parameter> params = new();
+            foreach (PropertyInfo prop in this.GetType().GetProperties())
+            {
+                ParameterAttribute attribute = prop.GetCustomAttribute<ParameterAttribute>();
+
+                if(attribute is null)
+                    continue;
+
+                params.Add(new() {Property = prop, Attribute = attribute});
+            }
+            return params.ToArray();
+        }
+    }
+
+    /// <summary>
+    /// Attribute used on <see cref="InitializationContext"/> properties to allow custom compilers to set them<br/>
+    /// Use <see cref="InitializationContext.GetParameters"/> to retreive publicly settable properties using this attribute
+    /// </summary>
+    [System.AttributeUsage(System.AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+    public sealed class ParameterAttribute : System.Attribute
+    {
+        public ParameterAttribute(string? name = String.Empty)
+        {
+            Name = name;
+        }
+
+        public string? Name { get;  init; }
     }
 }
 
@@ -154,14 +235,9 @@ public interface IContainer : IElement
     /// <param name="index"></param>
     /// <returns></returns>
     IElement? GetChild(int index);
-
-    public class InitializationContext : IElement.InitializationContext
-    {
-        // Type of layout handler    
-    }
 }
 
-public abstract class Container<TContext> : Element<TContext>, IContainer where TContext : IContainer.InitializationContext
+public abstract class Container<TContext> : Element<TContext>, IContainer where TContext : Container.InitializationContext
 {
     public Container(TContext context) : base(context) { }
 
@@ -235,11 +311,16 @@ public abstract class Container<TContext> : Element<TContext>, IContainer where 
     {
         throw new NotImplementedException("Update children's position");
     }
+
+    public class InitializationContext : IElement.InitializationContext
+    {
+        // Type of layout handler    
+    }
 }
 
-public abstract class Container : Container<IContainer.InitializationContext>
+public abstract class Container : Container<Container.InitializationContext>
 {
-    protected Container(IContainer.InitializationContext context) : base(context)
+    protected Container(Container.InitializationContext context) : base(context)
     {
     }
 }

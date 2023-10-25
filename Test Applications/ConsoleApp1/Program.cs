@@ -18,11 +18,15 @@ using Lodeon.Terminal.UI.Paging;
     [_] Make sure page and program methods are not exposed. Create navigator class that allows elements and pages to notify program when to change pages.
         . OnNavigate<TValue>(), Next(), Previous(), Navigate(TKey), Navigate(Value), Values.
  
-    [#] Make it so parent elements (only Containers) have childen, can have them added viewed and removed, and have to rearrange them based on a "LayoutHandler"
+    [=] Make it so parent elements (only Containers) have childen, can have them added viewed and removed, and have to rearrange them based on a "LayoutHandler"
         . if itself or it's parent changes size or position
 
-    [#] Change the element's "OnDraw" function with other events and make the "Canvas" property visible to subclasses so it can be drawn when needed
+    [_] Change the element's "OnDraw" function with other events and make the "Canvas" property visible to subclasses so it can be drawn when needed
         . Need to define a method to actually display what was drawn on the canvas
+
+    [#] Implement layout specifications for containers
+
+    [#] Implement Element<T>.FromXML(). Create element, read parameters from XML and set InitializationContext properties accordingly. Might pass ExceptionHandler for wrong, not convertible and unused variables
 
     [#] Decide how to go about focusing policy. Make it so elements can be hovered or focused. If no element is focused you can use arrow keys to hover on element's which have 'IsFocusable' true (if can't focus no point in hovering it so just skip it)
         . You start from the page container which will let you hover it's children. If you hover on a container and press ENTER you will hover it's children. If you press ENTER on a non-container you will focus
@@ -83,16 +87,16 @@ class MainPage : Page
 {
     public override void Popup(string title, string text)
     {
-        throw new NotImplementedException();
+        
     }
 
     protected override void OnDeselect()
     {
-        throw new NotImplementedException();
+        
     }
 
     protected override void OnSelect()
     {
-        throw new NotImplementedException();
+        
     }
 }

@@ -25,13 +25,13 @@ public class Page : Container<Page.InitializationContext>
     private GraphicBuffer? _programBuffer;
 
     public bool IsMain { get; init; }
-
+    public event EventHandler<ConsoleKeyInfo> OnKeyDown;
 
     // ---- Constructors ----------------------------------------------------------------------------
 
     public Page(InitializationContext context) : base(context)
     {
-        throw new NotImplementedException("Add required variables to this's script context");
+        
     }
 
 
@@ -57,21 +57,28 @@ public class Page : Container<Page.InitializationContext>
     }
 
     // ---- Event Handlers ----------------------------------------------------------------------------
+    private EventHandler<ConsoleKeyInfo> Script_KeyDownHandler = (object? sender, ConsoleKeyInfo e) => OnKeyDown?.Invoke(this, e);
 
     private void Script_OnPageChanged(Page page)
     {
-        // if page == this
-        // Enable all elements in page
-        // Send a resize event to redraw all screen
-        // Hook Script's input events
-        // start loop
-        // else
+        if(page == this)
+        {
+            // Enable all elements in page
+            // Send a resize event to redraw all screen
+            // Hook Script's input events
+            // start loop
+            _script.OnKeyDown += Script_KeyDownHandler;
+            return;
+        }
+
         // Disable all elements in page
         // Unhook all script's input events
-
         // enable / disable input?
+
+        _script.OnKeyDown -= Script_KeyDownHandler;
         throw new NotImplementedException();
     }
+    
     private void Script_OnExit()
     {
         OnDeselect();

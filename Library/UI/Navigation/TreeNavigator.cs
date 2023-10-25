@@ -5,9 +5,9 @@ namespace Lodeon.Terminal.UI.Navigation;
 
 // Fai di salvare tutto con le interfacce ma controllando che solo valori che derivano da T vengano inseriti. Converti all'uscita T
 
-public class TreeNavigator//<T> where T : INavigable
+public class TreeNavigator
 {
-    public TreeNavigator(INavigableContainer root)
+    public TreeNavigator(IContainer root)
     {
         SetContainer(root);
     }
@@ -17,19 +17,17 @@ public class TreeNavigator//<T> where T : INavigable
     public delegate void GenericNullableDel(INavigable? element);
     public delegate void ContainerDel(INavigableContainer element);
 
-    public event ContainerDel? OnTreeChangedFrom;
-    public event ContainerDel? OnTreeChangedTo;
-    public event GenericNullableDel? OnNavigateFrom;
-    public event GenericDel? OnNavigateTo;
-    public event ElementDel? OnSelect;
-    public event ElementDel? OnDeselect;
+    //public event ContainerDel? OnTreeChangedFrom;
+    //public event ContainerDel? OnTreeChangedTo;
+    //public event GenericNullableDel? OnNavigateFrom;
+    public event GenericDel? OnNavigate;
+    public event ElementDel? Focus;
+    public event ElementDel? Unfocus;
 
     private object _lock = new object();
-    private INavigableContainer _currentContainer;
-    private INavigable[] _elements;
+    private IContainer _currentContainer;
     private int _currentIndex;
-    private int _selectedIndex;
-    private bool _isElementSelected = false;
+    private bool _isFocused = false;
 
     /// <summary>
     /// Tries to navigate to the next child of this container
@@ -57,60 +55,54 @@ public class TreeNavigator//<T> where T : INavigable
 
     public bool NavigateIn()
     {
-        INavigable currentElement = _elements[_currentIndex];
+        IElement? child = _currentContainer.GetChildren(_currentIndex);
+
+        if(child is null)
+            return false;
+
+        // If element is 
+        if (_isFocused && !Unfocus())
+            return false;
 
         // If it is a container set it as current container
         if (currentElement is INavigableContainer container)
             return SetContainer(container);
 
         // Else select element
-        return Select(_currentIndex);
+        return Focus(_currentIndex);
     }
 
     public bool NavigateOut()
     {
         // If an element is selected, try to deselect it
-        if (Deselect())
-            return true;
+        if (_isFocused && !Unfocus())
+            return false;
 
         // If no element is selected try to move out to parent
-        INavigableContainer? parent = _currentContainer.GetParent();
+        IContainer? parent = _currentContainer.Parent;
 
         if (parent == null)
             return false;
 
-        // If an element is selected deselect it
-        if (_isElementSelected)
-            return Deselect();
-
         // If it is a container set it as current container
-        return SetContainer(parent);
+        SetContainer(parent);
+        return true;
     }
 
-    public bool SetContainer(INavigableContainer element) // Fai si di poter navigare a qualunque elemento. Se è un container imposta i figli, // altrimenti "selezionalo". Quando viene cambiato parent dovrebbe venir chiamato l'evento, OnNavigate sul primo figlio (per updatare le UI)
+    public bool SetContainer(IContainer element) // Fai si di poter navigare a qualunque elemento. Se è un container imposta i figli, // altrimenti "selezionalo". Quando viene cambiato parent dovrebbe venir chiamato l'evento, OnNavigate sul primo figlio (per updatare le UI)
     {
         lock (_lock)
         {
             if (element == null)
                 return false;
 
-            // Deselect element if one is selected
-            if (!TryDeselect())
+            // Unfocus element if one is selected
+            if (_isFocused && !Unfocus())
                 return false;
 
-            _elements = element.GetChildren();
-
-            INavigableContainer lastContainer = _currentContainer;
-            INavigableContainer newContainer = element;
-
-            OnTreeChangedFrom?.Invoke(lastContainer);
-            OnTreeChangedTo?.Invoke(newContainer);
-
-            // Update tree data
-            _currentContainer = newContainer;
-            _elements = element.GetChildren();
-            Navigate(0);
-
+            _currentContainer = element;
+            _currentIndex = 0;
+            _isFocused = false;
             return true;
         }
     }
@@ -120,7 +112,7 @@ public class TreeNavigator//<T> where T : INavigable
     /// Returns true if no element was selected or an element was selected and got deselected
     /// </summary>
     /// <returns></returns>
-    private bool TryDeselect()
+    private bool TryUnfocus()
     {
         lock (_lock)
         {
@@ -129,7 +121,7 @@ public class TreeNavigator//<T> where T : INavigable
                 return true;
 
             // If element is selected try to deselect it
-            return Deselect();
+            return Unfocus();
         }
     }
 
@@ -146,7 +138,7 @@ public class TreeNavigator//<T> where T : INavigable
                 return false;
 
             // Try to deselect an element if selected
-            if (!TryDeselect())
+            if (!TryUnfocus())
                 return false;
 
             INavigable lastElement = _elements[_currentIndex];
@@ -155,7 +147,7 @@ public class TreeNavigator//<T> where T : INavigable
             _currentIndex = index;
 
             OnNavigateFrom?.Invoke(lastElement);
-            OnNavigateTo?.Invoke(currentElement);
+            OnNavigateTo?.Invoke(child);
             return true;
         }
     }
@@ -172,7 +164,7 @@ public class TreeNavigator//<T> where T : INavigable
     /// </summary>
     /// <param name="index"></param>
     /// <returns></returns>
-    public bool Select(int index)
+    public bool Focus(int index)
     {
         lock (_lock)
         {
@@ -189,12 +181,12 @@ public class TreeNavigator//<T> where T : INavigable
                 return false;
 
             // If element is already selected try to deselect it and select new one
-            if (!TryDeselect())
+            if (!TryUnfocus())
                 return false;
 
-            // Select
+            // Focus
             OnSelect?.Invoke((INavigableElement)_elements[_selectedIndex]);
-            _isElementSelected = true;
+            _isFocused = true;
             _selectedIndex = index;
             return true;
         }
@@ -209,20 +201,20 @@ public class TreeNavigator//<T> where T : INavigable
     /// </list>
     /// </summary>
     /// <returns></returns>
-    public bool Deselect()
+    public bool Unfocus()
     {
         lock (_lock)
         {
             // If already not selected
-            if (!_isElementSelected)
+            if (!_isFocused)
                 return false;
 
             // If selected element is blocking navigation
             if (_elements[_selectedIndex].IsLocked())
                 return false;
 
-            // Deselect
-            _isElementSelected = false;
+            // Unfocus
+            _isFocused = false;
             OnDeselect?.Invoke((INavigableElement)_elements[_selectedIndex]);
             return true;
         }

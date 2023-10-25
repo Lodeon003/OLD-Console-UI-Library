@@ -43,7 +43,7 @@ public interface IScript
             program = Activator.CreateInstance(scriptType, context) as IScript;
 
             if (program == null)
-                throw new($"The function itself worked, worked but instance is null. It was casted wrong");
+                throw new InvalidOperationException($"The function itself worked, worked but instance is null. It was casted wrong");
         }
         catch (Exception e) {
             throw new InvalidOperationException($"\'{nameof(Activator.CreateInstance)}\' unexpectedly failed:\n -> {e.Message}", e);

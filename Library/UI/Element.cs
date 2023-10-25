@@ -45,15 +45,6 @@ public interface IElement : ITransform, IRenderable
 
         public PixelPoint InitialSize { get; init; } = default;
     }
-
-    public static Page FromXML(string path, Page.InitializationContext pageContext)
-    {
-        XmlDocument xml = new XmlDocument();
-        xml.Load(path);
-
-        Page page = new Page(pageContext);
-        return page;
-    }
 }
 
 /// <summary>

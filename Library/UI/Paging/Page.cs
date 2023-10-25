@@ -3,12 +3,12 @@ using Lodeon.Terminal.UI.Layout;
 using Lodeon.Terminal.UI.Navigation;
 using Lodeon.Terminal.UI.Units;
 using System.Security.Cryptography;
+using System.Xml;
 
 namespace Lodeon.Terminal.UI.Paging;
 
 public class Page : Container<Page.InitializationContext>
 {
-
     // ---- Overridable Methods ----------------------------------------------------------------------------
 
     public virtual void Popup(string title, string text) { }
@@ -56,7 +56,6 @@ public class Page : Container<Page.InitializationContext>
         throw new NotImplementedException();
     }
 
-
     // ---- Event Handlers ----------------------------------------------------------------------------
 
     private void Script_OnPageChanged(Page page)
@@ -79,6 +78,16 @@ public class Page : Container<Page.InitializationContext>
         _script.OnExiting -= Script_OnExit;
     }
 
+    // ---- Static Methods ----------------------------------------------------------------------------
+
+    public static Page FromXML(string path, InitializationContext pageContext)
+    {
+        XmlDocument xml = new XmlDocument();
+        xml.Load(path); 
+
+        Page page = new Page(pageContext);
+        return page;
+    }
 
     // ---- Initialization Context ----------------------------------------------------------------------------
 

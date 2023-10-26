@@ -3,9 +3,9 @@
     "",
     "\\Library",
     "\\Library\\UI",
-    "\\Test Applications",
-    "\\Test Applications\\ConsoleApp1"
+    "\\Library\\UI\\Layout",
+    "\\Library\\UI\\Paging"
   ],
-  "SelectedNode": "\\ANSI GUI Library.sln",
+  "SelectedNode": "\\Library\\UI\\Paging\\Page.cs",
   "PreviewInSolutionExplorer": false
 }

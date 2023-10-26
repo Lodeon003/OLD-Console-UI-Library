@@ -20,6 +20,7 @@ public interface ITransform
 
     public PixelPoint GetPosition();
     public PixelPoint GetSize();
+    public Pixel4 GetArea();
     //public Pixel4 GetArea();
 }
 

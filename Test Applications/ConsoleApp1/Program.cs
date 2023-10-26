@@ -18,8 +18,11 @@ using Lodeon.Terminal.UI.Paging;
     [_] Make sure page and program methods are not exposed. Create navigator class that allows elements and pages to notify program when to change pages.
         . OnNavigate<TValue>(), Next(), Previous(), Navigate(TKey), Navigate(Value), Values.
  
-    [=] Make it so parent elements (only Containers) have childen, can have them added viewed and removed, and have to rearrange them based on a "LayoutHandler"
-        . if itself or it's parent changes size or position
+    [_] Make it so parent elements (only Containers) have childen, can have them added viewed and removed
+
+    [#] Define layout policy. When element size/position changes, children should be notified. Make a LayoutChangeRequest to change it's position.
+        . Make a method to draw multiple items inside of a container at the same time. Make the parent send the child elements directly to be displayed.
+        . Make it so child element's don't redraw themselves when LayoutChangeReuqets happens, only set their position / size 
 
     [_] Change the element's "OnDraw" function with other events and make the "Canvas" property visible to subclasses so it can be drawn when needed
         . Need to define a method to actually display what was drawn on the canvas

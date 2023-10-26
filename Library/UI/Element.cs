@@ -20,7 +20,7 @@ namespace Lodeon.Terminal.UI;
 public interface IElement : ITransform, IRenderable
 {
     public IContainer? Parent { get; set; }
-    public Page? Page { get; protected set; }
+    public Page? Page { get; }
 
     public event EventHandler? ParentChanged;
     

@@ -22,8 +22,8 @@ internal static class Extensions
                    Math.Clamp(rect.Bottom, clamp.Top, clamp.Bottom));
     }
 
-    public static Rectangle Move(this Rectangle rect, PixelPoint offset)
-        => new(rect.Left + offset.X, rect.Top + rect.Y, rect.Right + offset.X, rect.Bottom + rect.Y);
+    public static Pixel4 Offset(this Pixel4 rect, PixelPoint offset)
+        => new(rect.Left + offset.X, rect.Top + offset.Y, rect.Right + offset.X, rect.Bottom + offset.Y);
 
     /// <summary>
     /// Converts a span from a type to another based using a rule supplied from the user<br/>

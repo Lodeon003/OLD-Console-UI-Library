@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using Lodeon.Terminal.UI.Units;
+using System.Drawing;
 using System.Text.Encodings.Web;
 
 namespace Lodeon.Terminal;
@@ -151,8 +152,8 @@ public class GraphicBuffer
     public virtual ReadOnlySpan<Pixel> GetGraphics()
         => _buffer;
 
-    public Rectangle GetArea()
-        => new Rectangle(0, 0, Width, Height);
+    public Pixel4 GetArea()
+        => new Pixel4(0, 0, Width, Height);
 
     //public Rectangle LocalToScreen(Rectangle screenArea)
     //    => new Rectangle(screenArea.X + Position.X, screenArea.Y + Position.Y, screenArea.Width, screenArea.Height);

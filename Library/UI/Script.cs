@@ -225,10 +225,10 @@ public abstract class Script<TContext>
         _currentPage.Lock((page) =>
         {
             if (page != null)
-                page.DrawRequested -= Page_DrawRequested;
+                page.DisplayRequested -= Page_DrawRequested;
         });
 
-        newPage.DrawRequested += Page_DrawRequested;
+        newPage.DisplayRequested += Page_DrawRequested;
         
         _currentPage.Set(newPage);
         OnPageChanged?.Invoke(newPage);

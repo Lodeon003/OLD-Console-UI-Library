@@ -6,7 +6,7 @@ public interface IRenderable
 {
     public static byte ColorSimilarityThreshold { get; set; } = 0;
     ReadOnlySpan<Pixel> GetGraphics();
-    Rectangle GetScreenArea();
+    Pixel4 GetScreenArea();
 }
 
 

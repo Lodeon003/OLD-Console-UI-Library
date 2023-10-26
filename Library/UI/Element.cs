@@ -309,7 +309,25 @@ public abstract class Container<TContext> : Element<TContext>, IContainer where 
 
     private void UpdateLayout()
     {
-        throw new NotImplementedException("Update children's position");
+        Span<IElement> children = CollectionsMarhsal.AsSpan(_children);
+        Span<ITransform> transforms;
+
+        // Allocate array
+        try { transforms = stackalloc ITransform[children.Length]; }
+        catch { transforms = ArrayPool<ITransform>.Shared.Rent(children.Length); }
+
+        try { transforms = stackalloc ITransform[children.Length]; }
+        catch { transforms = ArrayPool<ITransform>.Shared.Rent(children.Length); }
+
+        Pixel4 area = transforms.GetArea();
+
+        for(int i = 0; i < children.Length; i++)
+            OnLayout(area, transforms, i);
+    }
+
+    protected virtual Rectangle OnLayout(Rectangle area, ReadOnlySpan<ITransform> elements, int index)
+    {
+        throw new NotImplementedException("BOH");
     }
 
     public class InitializationContext : IElement.InitializationContext

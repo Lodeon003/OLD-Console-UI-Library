@@ -5,12 +5,15 @@ using Lodeon.Terminal.UI.Paging;
 ////using Lodeon.Terminal.UI.Layout;
 using Lodeon.Terminal.UI.Units;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Net.Http.Headers;
+using System.Net.Security;
 using System.Reflection;
 using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
@@ -29,145 +32,21 @@ public interface IElement : ITransform, IRenderable
     /// Event Raised whenever this element or it's children (if container) request to be drawn<br/>
     /// 'sender' is the element that requested to be drawn
     /// </summary>
-    public event EventHandler? DrawRequested;
-
-    public static Page FromXML(string path, Page.InitializationContext pageContext)
-    {
-        XmlDocument xml = new XmlDocument();
-        xml.Load(path);
-
-        Page page = new Page(pageContext);
-        return page;
-    }
-}
-
-/// <summary>
-/// Base class for UI elements 
-/// </summary>
-public abstract class Element<TContext> : IElement where TContext : IElement.InitializationContext
-{
-    public Element(TContext context)
-    {
-        Page = context.Page;
-        Parent = context.Parent;
-        
-        SizeChanged += OnSizeChanged;
-        
-        _buffer = new GraphicBuffer(context.InitialSize.X, context.InitialSize.Y);
-        _canvas = new GraphicCanvas(_buffer);
-    }
-
-    public IContainer? Parent { get => GetParent(); set => SetParent(value); }
-    public PixelPoint Position { get; set; } = default;
-    public PixelPoint Size { get; set; } = default;
-    public Page? Page { get; private set; }
-
-    private GraphicBuffer _buffer;
-    private GraphicCanvas _canvas;
-    private IContainer? _parent;
-
-    // ------   EVENTS     ------------------------------------------------------------------------------------------
-    public event ITransform.PositionChangeDel? PositionChanged;
-    public event ITransform.SizeChangeDel? SizeChanged;
-    public event ITransform.TransformChangeDel? TransformChanged;
-    public virtual event EventHandler? DrawRequested;
-    public event EventHandler? ParentChanged;
-
-    // ------   OVERRIDABLE     ------------------------------------------------------------------------------------------
-    /// <summary>
-    /// Invoked whenever this element requested to be drawn
-    /// </summary>
-    /// <param name="canvas">The object used to draw this element's graphics</param>
-    /// <param name="width">The width of this element in terminal window characters</param>
-    /// <param name="height">The height of this element in terminal window characters</param>
-    protected abstract void OnDraw(GraphicCanvas canvas, int width, int height);
-    
-    /// <summary>
-    /// Invoked whenever this element or it's children (if container) request to be drawn
-    /// </summary>
-    /// <param name="sender">The element that requested to be drawn</param>
-    protected virtual void OnDrawRequested(IElement sender) { }
+    public event EventHandler? DisplayRequested;
 
     /// <summary>
-    /// Invoked whenever a key was pressed on the keyboard
+    /// Attribute used on <see cref="InitializationContext"/> properties to allow custom compilers to set them<br/>
+    /// Use <see cref="InitializationContext.GetParameters"/> to retreive publicly settable properties using this attribute
     /// </summary>
-    /// <param name="info">Information about the key being pressed</param>
-    protected virtual void OnKeyDown(ConsoleKeyInfo info) { }
-    
-    // ------   PUBLIC     ------------------------------------------------------------------------------------------
-
-    public ReadOnlySpan<Pixel> GetGraphics()
-        => _buffer.GetGraphics();
-
-    public Rectangle GetScreenArea()
-        => _buffer.GetArea().Move(Position);
-
-    public PixelPoint GetPosition()
-        => Position;
-
-    public PixelPoint GetSize()
-        => Size;
-
-    public void SetParent(IContainer? value)
+    [System.AttributeUsage(System.AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+    public sealed class ParameterAttribute : System.Attribute
     {
-        // NOTE: it can allow NULL values. It is made so element can be detached
-        // from containers and be left outside of the visual tree
-        if (_parent == value)
-            return;
-            
-        // Unhook events from old page
-        Page?.OnKeyDown -= Page_KeyDownHandler;
+        public ParameterAttribute(string? name = "")
+        {
+            Name = name;
+        }
 
-        // Update values
-        _parent = value;
-        Page = _parent?.Page;
-
-        // Hook events to new page if not null
-        Page?.OnKeyDown += Page_KeyDownHandler;
-
-        // Notify
-        ParentChanged?.Invoke(this, EventArgs.Empty);
-    }
-
-    public IContainer GetParent()
-        => _parent;
-
-    /// <summary>
-    /// Calls element's draw procedure and signals page to draw this element.<br/>
-    /// (Invokes <see cref="OnDraw(GraphicCanvas, int, int)"/> method and raises <see cref="DrawRequested"/> event that page will listen to)
-    /// </summary>
-    protected void Draw()
-    {
-        OnDrawRequested(this);
-        OnDraw(_canvas, _buffer.Width, _buffer.Height);
-        DrawRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    // ------   PRIVATE     ------------------------------------------------------------------------------------------
-
-    private void OnSizeChanged(ITransform _, PixelPoint oldSize, PixelPoint newSize)
-    {
-        _buffer.Resize(newSize.X, newSize.Y);
-        Draw();
-    }
-
-    /// <summary>
-    /// Instantiates a new element from an XML code snippet, setting <paramref cref="context"/> parameters form XML<br/>
-    /// <b>Note: </b> <paramref cref="context"/> parameters set in XML will overwrite values passed as method parameters
-    /// </summary>
-    public static TElement FromXML<TElement, TContext>(XmlNode node, TContext context) where TElement : Element<TContext>
-    {
-        TElement.Parameter[] params = context.GetParameters();
-        throw new NotImplementedException("Read node attributes and set context variables");
-    }
-
-    /// <summary>
-    /// Rappresents a reflected property which are adorned with <see cref="ParameterAttribute"/>
-    /// </summary>
-    public struct Parameter
-    {
-        PropertyInfo Property { get; init; }
-        public ParameterAttribute Attribute { get; init; }
+        public string? Name { get; init; }
     }
 
     /// <summary>
@@ -185,35 +64,175 @@ public abstract class Element<TContext> : IElement where TContext : IElement.Ini
         /// <summary>
         /// Returns all properties contained in this implementation of <see cref="InitializationContext"/> which has a <see cref="ParameterAttribute"/>
         /// </summary>
-        public static Parameter[] GetParameters()
+        public ContextParameter[] GetParameters()
         {
-            List<Parameter> params = new();
+            List <ContextParameter> param = new();
             foreach (PropertyInfo prop in this.GetType().GetProperties())
             {
-                ParameterAttribute attribute = prop.GetCustomAttribute<ParameterAttribute>();
+                ParameterAttribute? attribute = prop.GetCustomAttribute<ParameterAttribute>();
 
-                if(attribute is null)
+                if (attribute is null)
                     continue;
 
-                params.Add(new() {Property = prop, Attribute = attribute});
+                param.Add(new() { Property = prop, Attribute = attribute });
             }
-            return params.ToArray();
+            return param.ToArray();
         }
     }
 
     /// <summary>
-    /// Attribute used on <see cref="InitializationContext"/> properties to allow custom compilers to set them<br/>
-    /// Use <see cref="InitializationContext.GetParameters"/> to retreive publicly settable properties using this attribute
+    /// Rappresents a reflected property which are adorned with <see cref="ParameterAttribute"/>
     /// </summary>
-    [System.AttributeUsage(System.AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    public sealed class ParameterAttribute : System.Attribute
+    public struct ContextParameter
     {
-        public ParameterAttribute(string? name = String.Empty)
-        {
-            Name = name;
-        }
+        public PropertyInfo Property { get; init; }
+        public ParameterAttribute Attribute { get; init; }
+    }
+}
 
-        public string? Name { get;  init; }
+/// <summary>
+/// Base class for UI elements 
+/// </summary>
+public abstract class Element<TContext> : IElement where TContext : IElement.InitializationContext
+{
+    public Element(TContext context)
+    {
+        Page = context.Page;
+        Parent = context.Parent;
+        
+        _buffer = new GraphicBuffer(context.InitialSize.X, context.InitialSize.Y);
+        _canvas = new GraphicCanvas(_buffer);
+    }
+
+    public IContainer? Parent { get => GetParent(); set => SetParent(value); }
+    public PixelPoint Position { get => GetPosition(); set => SetPosition(value); }
+    public PixelPoint Size { get => GetSize(); set => SetSize(value); }
+    public Page? Page { get; private set; }
+
+    private GraphicBuffer _buffer;
+    private GraphicCanvas _canvas;
+    private IContainer? _parent;
+    private PixelPoint _position;
+    private PixelPoint _size;
+
+    // ------   EVENTS     ------------------------------------------------------------------------------------------
+    public event ITransform.PositionChangeDel? PositionChanged;
+    public event ITransform.SizeChangeDel? SizeChanged;
+    public event ITransform.TransformChangeDel? TransformChanged;
+    public virtual event EventHandler? DisplayRequested;
+    public event EventHandler? ParentChanged;
+
+    // ------   OVERRIDABLE     ------------------------------------------------------------------------------------------
+    /// <summary>
+    /// Invoked whenever this element requested to be drawn
+    /// </summary>
+    /// <param name="canvas">The object used to draw this element's graphics</param>
+    /// <param name="width">The width of this element in terminal window characters</param>
+    /// <param name="height">The height of this element in terminal window characters</param>
+    protected abstract void OnDraw(GraphicCanvas canvas, int width, int height);
+    
+    /// <summary>
+    /// Invoked whenever this element or it's children (if container) request to be drawn
+    /// </summary>
+    /// <param name="sender">The element that requested to be drawn</param>
+    protected virtual void OnDisplayRequested(IElement sender) { }
+
+    /// <summary>
+    /// Invoked whenever a key was pressed on the keyboard
+    /// </summary>
+    /// <param name="info">Information about the key being pressed</param>
+    protected virtual void OnKeyDown(ConsoleKeyInfo info) { }
+    
+    // ------   PUBLIC     ------------------------------------------------------------------------------------------
+
+    public ReadOnlySpan<Pixel> GetGraphics()
+        => _buffer.GetGraphics();
+
+    public Pixel4 GetArea()
+        => _buffer.GetArea().Offset(Position);
+
+    public void SetPosition(PixelPoint newPosition)
+    {
+        if (newPosition == _position)
+            return;
+
+        PixelPoint oldPosition = _position;
+        _position = newPosition;
+
+        PositionChanged?.Invoke(this, oldPosition, newPosition);
+    }
+
+    public PixelPoint GetPosition()
+        => _position;
+
+    public void SetSize(PixelPoint newSize)
+    {
+        if (_size == newSize)
+            return;
+
+        PixelPoint oldSize = _size;
+        _size = newSize;
+
+        // Element code
+        _buffer.Resize(newSize.X, newSize.Y);
+        OnDraw(_canvas, _buffer.Width, _buffer.Height);
+
+        SizeChanged?.Invoke(this, oldSize, newSize);
+    }
+
+    public PixelPoint GetSize()
+        => Size;
+
+    public void SetParent(IContainer? value)
+    {
+        // NOTE: it can allow NULL values. It is made so element can be detached
+        // from containers and be left outside of the visual tree
+        if (_parent == value)
+            return;
+        
+        // Unhook events from old page
+        if(Page != null)
+            Page.OnKeyDown -= Page_KeyDownHandler;
+
+        // Update values
+        _parent = value;
+        Page = _parent?.Page;
+
+        // Hook events to new page if not null
+        if (Page != null)
+            Page.OnKeyDown += Page_KeyDownHandler;
+
+        // Notify
+        ParentChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public IContainer? GetParent()
+        => _parent;
+
+    /// <summary>
+    /// Calls element's draw procedure and signals page to draw this element.<br/>
+    /// (Invokes <see cref="OnDraw(GraphicCanvas, int, int)"/> method and raises <see cref="DisplayRequested"/> event that page will listen to)
+    /// </summary>
+    protected void DrawAndRequestDisplay()
+    {
+        OnDraw(_canvas, _buffer.Width, _buffer.Height);
+        OnDisplayRequested(this);
+        DisplayRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    // ------   PRIVATE     ------------------------------------------------------------------------------------------
+
+    private void Page_KeyDownHandler(object? sender, ConsoleKeyInfo e)
+        => OnKeyDown(e);
+
+    /// <summary>
+    /// Instantiates a new element from an XML code snippet, setting <paramref cref="context"/> parameters form XML<br/>
+    /// <b>Note: </b> <paramref cref="context"/> parameters set in XML will overwrite values passed as method parameters
+    /// </summary>
+    public static TElement FromXML<TElement, TCtx>(XmlNode node, TCtx context) where TElement : Element<TCtx> where TCtx : IElement.InitializationContext
+    {
+        IElement.ContextParameter[] param = context.GetParameters();
+        throw new NotImplementedException("Read node attributes and set context variables");
     }
 }
 
@@ -235,6 +254,11 @@ public interface IContainer : IElement
     /// <param name="index"></param>
     /// <returns></returns>
     IElement? GetChild(int index);
+
+    public class InitializationContext : IElement.InitializationContext
+    {
+        // Type of layout handler    
+    }
 }
 
 public abstract class Container<TContext> : Element<TContext>, IContainer where TContext : Container.InitializationContext
@@ -243,7 +267,7 @@ public abstract class Container<TContext> : Element<TContext>, IContainer where 
 
     private List<IElement> _children = new();
 
-    public sealed override event EventHandler? DrawRequested;
+    public sealed override event EventHandler? DisplayRequested;
 
     public void AddChild(IElement child)
     {
@@ -252,7 +276,7 @@ public abstract class Container<TContext> : Element<TContext>, IContainer where 
 
         child.Parent = this;
         child.ParentChanged += Child_OnParentChanged;
-        child.DrawRequested += Child_OnDrawRequested;
+        child.DisplayRequested += Child_OnDrawRequested;
     }
 
     public void RemoveChild(IElement child)
@@ -260,7 +284,7 @@ public abstract class Container<TContext> : Element<TContext>, IContainer where 
         _children.Remove(child);
         OnChildRemoved(child);
 
-        child.DrawRequested -= Child_OnDrawRequested;
+        child.DisplayRequested -= Child_OnDrawRequested;
         child.ParentChanged -= Child_OnParentChanged;
         
         if(child.Parent == this)
@@ -303,18 +327,24 @@ public abstract class Container<TContext> : Element<TContext>, IContainer where 
         if (sender is not IElement element)
             throw new ArgumentNullException();
 
-        OnDrawRequested(element);
-        DrawRequested?.Invoke(sender, e);
+        OnDisplayRequested(element);
+        DisplayRequested?.Invoke(sender, e);
     }
 
     private void UpdateLayout()
     {
-        throw new NotImplementedException("Update children's position");
+        Span<IElement> children = CollectionsMarshal.AsSpan(_children);
+        ITransform[] transforms = ArrayPool<ITransform>.Shared.Rent(children.Length);
+
+        Pixel4 area = 
+
+        for(int i = 0; i < children.Length; i++)
+            OnLayout(area, transforms, i);
     }
 
-    public class InitializationContext : IElement.InitializationContext
+    protected virtual Rectangle OnLayout(Rectangle area, ReadOnlySpan<ITransform> elements, int index)
     {
-        // Type of layout handler    
+        throw new NotImplementedException("BOH");
     }
 }
 

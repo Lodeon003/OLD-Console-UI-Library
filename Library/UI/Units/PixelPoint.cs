@@ -1,4 +1,6 @@
-﻿namespace Lodeon.Terminal.UI.Units;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Lodeon.Terminal.UI.Units;
 
 /// <summary>
 /// Represents an integer point on a 2D surface<br/>(Is implicitly converted from and to a <see cref="System.Drawing.Point"/>)
@@ -18,6 +20,22 @@ public readonly struct PixelPoint
     {
         X = x;
         Y = y;
+    }
+
+    public static bool operator ==(PixelPoint a, PixelPoint b)
+        => a.X == b.X && a.Y == b.Y;
+
+    public static bool operator !=(PixelPoint a, PixelPoint b)
+        => a.X != b.X && a.Y != b.Y;
+
+    public override bool Equals([NotNullWhen(true)] object? obj)
+    {
+        PixelPoint? other = obj as PixelPoint?;
+
+        if (other is not PixelPoint point)
+            return false;
+
+        return point.X == this.X && point.Y == this.Y;
     }
 
     public static PixelPoint FromPoint(Point point, PixelPoint scale)

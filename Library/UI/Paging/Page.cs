@@ -90,7 +90,9 @@ public class Page : Container<Page.InitializationContext>
     public static Page FromXML(string path, InitializationContext pageContext)
     {
         XmlDocument xml = new XmlDocument();
-        xml.Load(path); 
+        xml.Load(path);
+
+        throw new NotImplementedException("Not implemented");
 
         Page page = new Page(pageContext);
         return page;
@@ -98,7 +100,7 @@ public class Page : Container<Page.InitializationContext>
 
     // ---- Initialization Context ----------------------------------------------------------------------------
 
-    public class InitializationContext : IContainer.InitializationContext
+    public class InitializationContext : Container.InitializationContext
     {
 
     }

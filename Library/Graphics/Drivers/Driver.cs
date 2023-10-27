@@ -85,7 +85,7 @@ public abstract class Driver : IDisposable
 
         // Get screen area and calculate buffer source area. Width and height are the same for source and destination,
         // but buffer starts at 0 instead of the element's screen position
-        Rectangle screenArea = graphic.GetScreenArea();
+        Rectangle screenArea = graphic.GetArea();
         Rectangle sourceArea = new Rectangle(0, 0, screenArea.Width, screenArea.Height);
 
         lock (_lock)
@@ -108,7 +108,7 @@ public abstract class Driver : IDisposable
             throw new ObjectDisposedException(this.GetType().FullName);
 
         // Get screen area to extract element position
-        Rectangle screenArea = graphic.GetScreenArea();
+        Rectangle screenArea = graphic.GetArea();
         
         lock (_lock)
         {

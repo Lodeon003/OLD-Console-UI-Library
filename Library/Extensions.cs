@@ -22,6 +22,30 @@ internal static class Extensions
                    Math.Clamp(rect.Bottom, clamp.Top, clamp.Bottom));
     }
 
-    public static Rectangle Move(this Rectangle rect, PixelPoint offset)
-        => new(rect.Left + offset.X, rect.Top + rect.Y, rect.Right + offset.X, rect.Bottom + rect.Y);
+    public static Pixel4 Offset(this Pixel4 rect, PixelPoint offset)
+        => new(rect.Left + offset.X, rect.Top + offset.Y, rect.Right + offset.X, rect.Bottom + offset.Y);
+
+    /// <summary>
+    /// Converts a span from a type to another based using a rule supplied from the user<br/>
+    /// The spans must be same length. If the predicate method throws an exception it gets thrown wrapped inside of a <see cref="InvalidOperationException"/>
+    /// </summary>
+    /// <exception cref="FormatException"/>
+    /// <exception cref="ArgumentNullException"/>
+    /// <exception cref="InvalidOperationException"/>
+    public static void Map<TSource, TTarget>(this Span<TSource> source, Span<TTarget> target, Func<TSource, TTarget> predicate)
+    {
+        ArgumentNullException.ThrowIfNull(predicate);
+
+        if(source.Length != target.Length)
+            throw new FormatException($"Mapped spans must be of the same length. First span is {source.Length}, second is {target.Length}");
+
+        try
+        {
+            for(int i = 0; i < source.Length; i++)
+               target[i] = predicate.Invoke(source[i]);
+        }
+        catch(Exception e) {
+            throw new InvalidOperationException("The predicate threw an exeption", e);
+        }
+    }
 }

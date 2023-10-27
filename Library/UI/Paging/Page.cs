@@ -57,7 +57,9 @@ public class Page : Container<Page.InitializationContext>
     }
 
     // ---- Event Handlers ----------------------------------------------------------------------------
-    private EventHandler<ConsoleKeyInfo> Script_KeyDownHandler = (object? sender, ConsoleKeyInfo e) => OnKeyDown?.Invoke(this, e);
+
+    private void Script_KeyDownHandler(object? sender, ConsoleKeyInfo e)
+        => OnKeyDown?.Invoke(this, e);
 
     private void Script_OnPageChanged(Page page)
     {
